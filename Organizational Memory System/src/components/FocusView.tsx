@@ -18,7 +18,10 @@ import {
   Mail,
   Video,
   MessageSquare,
-  Phone
+  Phone,
+  Search,
+  Building2,
+  Plus
 } from 'lucide-react';
 import { AttentionItem, AttentionType, EvidenceItem, CollaborationComment } from '../types';
 import { getRelativeTime } from '../utils/AttentionScore';
@@ -152,19 +155,55 @@ interface AttentionItemWithThread extends AttentionItem {
   };
 }
 
-// Mock suggested collaborators - in a real app, this would come from your team/organization data
-const SUGGESTED_COLLABORATORS = [
-  { id: '1', name: 'Sarah Chen', role: 'Product Lead', avatar: 'SC' },
-  { id: '2', name: 'Mike Rodriguez', role: 'Engineering Manager', avatar: 'MR' },
-  { id: '3', name: 'Emily Watson', role: 'Legal Counsel', avatar: 'EW' },
-  { id: '4', name: 'James Park', role: 'Finance Director', avatar: 'JP' },
-  { id: '5', name: 'Lisa Thompson', role: 'Operations Lead', avatar: 'LT' },
+// Organization directory - internal people
+const ORGANIZATION_DIRECTORY = [
+  { id: '1', name: 'Sarah Chen', email: 'sarah.chen@company.com', role: 'Product Lead', avatar: 'SC', isInternal: true },
+  { id: '2', name: 'Mike Rodriguez', email: 'mike.rodriguez@company.com', role: 'Engineering Manager', avatar: 'MR', isInternal: true },
+  { id: '3', name: 'Emily Watson', email: 'emily.watson@company.com', role: 'Legal Counsel', avatar: 'EW', isInternal: true },
+  { id: '4', name: 'James Park', email: 'james.park@company.com', role: 'Finance Director', avatar: 'JP', isInternal: true },
+  { id: '5', name: 'Lisa Thompson', email: 'lisa.thompson@company.com', role: 'Operations Lead', avatar: 'LT', isInternal: true },
+  { id: '6', name: 'David Kim', email: 'david.kim@company.com', role: 'DevOps Lead', avatar: 'DK', isInternal: true },
+  { id: '7', name: 'Anna Martinez', email: 'anna.martinez@company.com', role: 'CTO', avatar: 'AM', isInternal: true },
 ];
+
+// CRM contacts - external people
+const CRM_CONTACTS = [
+  { id: 'ext-1', name: 'John Smith', email: 'john.smith@acme.com', company: 'Acme Corp', isInternal: false },
+  { id: 'ext-2', name: 'Rachel Green', email: 'rachel@northstar.io', company: 'Northstar Inc', isInternal: false },
+  { id: 'ext-3', name: 'Tom Wilson', email: 'twilson@techflow.com', company: 'TechFlow', isInternal: false },
+];
+
+// For backward compatibility
+const SUGGESTED_COLLABORATORS = ORGANIZATION_DIRECTORY;
 
 export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction }) => {
   const [isCollaborating, setIsCollaborating] = useState(false);
   const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
   const [threadStarted, setThreadStarted] = useState(false);
+
+  // Meeting-specific state for adding people to calendar
+  const [isAddingPeople, setIsAddingPeople] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [addedInvitees, setAddedInvitees] = useState<Array<{ id: string; name: string; email: string; isInternal: boolean; company?: string }>>([]);
+
+  // Filter people based on search
+  const filteredPeople = searchQuery.length > 0 ? [
+    ...ORGANIZATION_DIRECTORY.filter(p =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.email.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    ...CRM_CONTACTS.filter(p =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.email.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  ] : [];
+
+  // Check if search query is a valid email
+  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isNewEmail = isValidEmail(searchQuery) &&
+    !ORGANIZATION_DIRECTORY.some(p => p.email.toLowerCase() === searchQuery.toLowerCase()) &&
+    !CRM_CONTACTS.some(p => p.email.toLowerCase() === searchQuery.toLowerCase()) &&
+    !addedInvitees.some(p => p.email.toLowerCase() === searchQuery.toLowerCase());
 
   if (!item) return null;
 
@@ -376,9 +415,185 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
               </>
             )}
 
-            {/* Collaboration Section - Only shown when Collaborate/Add People is clicked */}
+            {/* Add People to Calendar - for meetings */}
             <AnimatePresence>
-              {isCollaborating && (
+              {item.itemType === 'meeting' && isAddingPeople && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="border-t border-zinc-200 dark:border-zinc-800 pt-4 overflow-hidden"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                        <Calendar size={12} />
+                        Add to Calendar Invite
+                      </h2>
+                      <button
+                        onClick={() => {
+                          setIsAddingPeople(false);
+                          setSearchQuery('');
+                        }}
+                        className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+
+                    {/* Search input */}
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search people or enter email..."
+                        className="w-full pl-9 pr-4 py-2.5 text-sm bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent placeholder:text-zinc-400"
+                      />
+                    </div>
+
+                    {/* Added invitees */}
+                    {addedInvitees.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {addedInvitees.map((person) => (
+                          <div
+                            key={person.id}
+                            className={`flex items-center gap-1.5 pl-2 pr-1 py-1 rounded-full text-xs ${
+                              person.isInternal
+                                ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300'
+                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300'
+                            }`}
+                          >
+                            <span>{person.name || person.email}</span>
+                            <button
+                              onClick={() => setAddedInvitees(prev => prev.filter(p => p.id !== person.id))}
+                              className="w-4 h-4 rounded-full hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center"
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Search results */}
+                    {searchQuery.length > 0 && (
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        {filteredPeople.map((person) => {
+                          const isAlreadyAdded = addedInvitees.some(p => p.email === person.email);
+                          if (isAlreadyAdded) return null;
+                          return (
+                            <button
+                              key={person.id}
+                              onClick={() => {
+                                setAddedInvitees(prev => [...prev, {
+                                  id: person.id,
+                                  name: person.name,
+                                  email: person.email,
+                                  isInternal: person.isInternal,
+                                  company: 'company' in person ? person.company : undefined
+                                }]);
+                                setSearchQuery('');
+                              }}
+                              className="w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600 bg-zinc-50 dark:bg-zinc-800/50 transition-all"
+                            >
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium ${
+                                person.isInternal
+                                  ? 'bg-violet-200 dark:bg-violet-800 text-violet-700 dark:text-violet-300'
+                                  : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                              }`}>
+                                {'avatar' in person ? person.avatar : person.name.split(' ').map(n => n[0]).join('')}
+                              </div>
+                              <div className="flex-1 text-left">
+                                <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                                  {person.name}
+                                  {person.isInternal && (
+                                    <span className="px-1.5 py-0.5 text-[9px] bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded">Internal</span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                                  {person.email}
+                                  {'company' in person && (
+                                    <>
+                                      <span>•</span>
+                                      <Building2 size={9} />
+                                      {person.company}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <Plus size={14} className="text-zinc-400" />
+                            </button>
+                          );
+                        })}
+
+                        {/* Add external email option */}
+                        {isNewEmail && (
+                          <button
+                            onClick={() => {
+                              setAddedInvitees(prev => [...prev, {
+                                id: `ext-new-${Date.now()}`,
+                                name: '',
+                                email: searchQuery,
+                                isInternal: false
+                              }]);
+                              setSearchQuery('');
+                            }}
+                            className="w-full flex items-center gap-2.5 p-2.5 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500 bg-zinc-50 dark:bg-zinc-800/50 transition-all"
+                          >
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center bg-zinc-200 dark:bg-zinc-700">
+                              <Mail size={12} className="text-zinc-500" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+                                Add external: {searchQuery}
+                              </div>
+                              <div className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                                Send calendar invite to this email
+                              </div>
+                            </div>
+                            <Plus size={14} className="text-zinc-400" />
+                          </button>
+                        )}
+
+                        {filteredPeople.length === 0 && !isNewEmail && searchQuery.length > 2 && (
+                          <p className="text-xs text-zinc-400 text-center py-3">
+                            No matches found. Enter a full email to invite externally.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Add to calendar button */}
+                    <button
+                      onClick={() => {
+                        // In a real app, this would call calendar API
+                        console.log('Adding to calendar:', addedInvitees);
+                        setIsAddingPeople(false);
+                        setAddedInvitees([]);
+                        setSearchQuery('');
+                      }}
+                      disabled={addedInvitees.length === 0}
+                      className={`w-full py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                        addedInvitees.length > 0
+                          ? 'bg-violet-600 hover:bg-violet-700 text-white'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'
+                      }`}
+                    >
+                      {addedInvitees.length > 0
+                        ? `Add ${addedInvitees.length} ${addedInvitees.length === 1 ? 'person' : 'people'} to calendar`
+                        : 'Search for people to add'
+                      }
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Collaboration Section - for non-meeting items */}
+            <AnimatePresence>
+              {item.itemType !== 'meeting' && isCollaborating && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
@@ -528,21 +743,21 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
             <div className="flex items-center justify-end gap-2">
               {item.itemType === 'meeting' ? (
                 <>
-                  {/* Add People - for meetings */}
+                  {/* Add People - for meetings (adds to calendar invite) */}
                   <button
                     onClick={() => {
-                      setIsCollaborating(!isCollaborating);
-                      if (isCollaborating) {
-                        setThreadStarted(false);
-                        setSelectedCollaborators([]);
+                      setIsAddingPeople(!isAddingPeople);
+                      if (isAddingPeople) {
+                        setSearchQuery('');
+                        setAddedInvitees([]);
                       }
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors ${
-                      isCollaborating ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors ${
+                      isAddingPeople ? 'ring-2 ring-violet-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
                     }`}
                   >
                     <UserPlus size={12} />
-                    {isCollaborating ? 'Cancel' : 'Add People'}
+                    {isAddingPeople ? 'Cancel' : 'Add People'}
                   </button>
 
                   {/* Join Now - primary action for meetings */}
