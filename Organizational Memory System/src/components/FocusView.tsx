@@ -279,46 +279,49 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
               </div>
             )}
 
-            {/* Sources */}
-            {item.evidence && item.evidence.length > 0 && (
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Sources</h2>
-                <div className="flex flex-wrap gap-2">
-                  {item.evidence.map((evidence, index) => (
-                    <button
-                      key={index}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-600 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                    >
-                      <span>{evidence.type}</span>
-                      <ExternalLink size={10} className="opacity-60" />
-                    </button>
-                  ))}
+            {/* Sources and People Involved - side by side */}
+            <div className="flex items-start justify-between gap-6">
+              {/* Sources - left side */}
+              {item.evidence && item.evidence.length > 0 && (
+                <div className="flex-1">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Sources</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {item.evidence.map((evidence, index) => (
+                      <button
+                        key={index}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-600 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        <span>{evidence.type}</span>
+                        <ExternalLink size={10} className="opacity-60" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Collaborators */}
-            {item.collaborators && item.collaborators.length > 0 && (
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-2">
-                  <Users size={12} />
-                  People Involved ({item.collaborators.length})
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {item.collaborators.map((person, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full"
-                    >
-                      <div className="w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600 flex items-center justify-center text-[9px] font-medium text-zinc-600 dark:text-zinc-300">
-                        {person.charAt(0).toUpperCase()}
+              {/* People Involved - right side */}
+              {item.collaborators && item.collaborators.length > 0 && (
+                <div className="flex-shrink-0">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-2">
+                    <Users size={12} />
+                    People Involved ({item.collaborators.length})
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {item.collaborators.map((person, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full"
+                      >
+                        <div className="w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600 flex items-center justify-center text-[9px] font-medium text-zinc-600 dark:text-zinc-300">
+                          {person.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-xs text-zinc-700 dark:text-zinc-300">{person}</span>
                       </div>
-                      <span className="text-xs text-zinc-700 dark:text-zinc-300">{person}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Collaboration Section - Only shown when Collaborate is clicked */}
             <AnimatePresence>
@@ -492,63 +495,51 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
 
           {/* Footer with Actions */}
           <div className="shrink-0 px-5 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
-            <div className="flex items-center justify-between">
-              {/* Left: View Source */}
+            <div className="flex items-center justify-end gap-2">
+              {/* Collaborate */}
               <button
-                onClick={() => onAction('view-source', item)}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                onClick={() => {
+                  setIsCollaborating(!isCollaborating);
+                  if (isCollaborating) {
+                    setThreadStarted(false);
+                    setSelectedCollaborators([]);
+                  }
+                }}
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors ${
+                  isCollaborating ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
+                }`}
               >
-                <ExternalLink size={12} />
-                View Source
+                <UserPlus size={12} />
+                {isCollaborating ? 'Cancel' : 'Collaborate'}
               </button>
 
-              {/* Right: Collaborate + Next Steps + Snooze */}
-              <div className="flex items-center gap-2">
-                {/* Collaborate */}
-                <button
-                  onClick={() => {
-                    setIsCollaborating(!isCollaborating);
-                    if (isCollaborating) {
-                      setThreadStarted(false);
-                      setSelectedCollaborators([]);
-                    }
-                  }}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors ${
-                    isCollaborating ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
-                  }`}
-                >
-                  <UserPlus size={12} />
-                  {isCollaborating ? 'Cancel' : 'Collaborate'}
-                </button>
+              {/* Contextual Next Step Actions */}
+              {nextStepActions.map((action) => {
+                const ActionIcon = action.icon;
+                return (
+                  <button
+                    key={action.id}
+                    onClick={() => onAction(action.id, item)}
+                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                      action.primary
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+                    }`}
+                  >
+                    <ActionIcon size={12} />
+                    {action.label}
+                  </button>
+                );
+              })}
 
-                {/* Contextual Next Step Actions */}
-                {nextStepActions.map((action) => {
-                  const ActionIcon = action.icon;
-                  return (
-                    <button
-                      key={action.id}
-                      onClick={() => onAction(action.id, item)}
-                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
-                        action.primary
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                          : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40'
-                      }`}
-                    >
-                      <ActionIcon size={12} />
-                      {action.label}
-                    </button>
-                  );
-                })}
-
-                {/* Snooze */}
-                <button
-                  onClick={() => onAction('snooze', item)}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                >
-                  <Clock size={12} />
-                  Snooze
-                </button>
-              </div>
+              {/* Snooze */}
+              <button
+                onClick={() => onAction('snooze', item)}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+              >
+                <Clock size={12} />
+                Snooze
+              </button>
             </div>
           </div>
         </motion.div>
