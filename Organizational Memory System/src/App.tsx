@@ -48,16 +48,22 @@ import {
   Moon,
   Monitor
 } from 'lucide-react';
-import sentraLogo from 'figma:asset/2d867a3a115cb7771d8ca0fe7bf3c137b72785fa.png';
+import sentraLogo from './assets/2d867a3a115cb7771d8ca0fe7bf3c137b72785fa.png';
 import { PillState } from './components/PillState';
 import { NowScreen } from './components/NowScreen';
 import { SwimlaneDetailScreen } from './components/SwimlaneDetailScreen';
-import { alerts, commitments, meetingBriefs, memoryMap, extendedReports, ExtendedReport, swimlanesList, SwimlaneMeta, timelineData, TimelineItem } from './data';
+import { SwimlanesScreen as NewSwimlanesScreen } from './components/SwimlanesScreen';
+import { PersistentChatBar } from './components/PersistentChatBar';
+import { ChatInterface } from './components/ChatInterface';
+import { alerts, commitments, meetingBriefs, memoryMap, extendedReports, ExtendedReport, swimlanesList, SwimlaneMeta, timelineData, TimelineItem, relationshipAlerts, asyncCommitments, contacts, companies } from './data';
 import { Alert, Commitment, MeetingBrief } from './types';
+import { DynamicBackground } from './components/DynamicBackground';
+import { HighlightedContent, CommentLayer, CommentPanel, CommentHighlight } from './components/ReportComments';
+import { CrmPage } from './components/CrmPage';
 
 // --- Types ---
 type ViewMode = 'pill' | 'compact' | 'expanded';
-type NavTab = 'Now' | 'Reports' | 'Swimlanes' | 'Meetings' | 'ToDo' | 'Settings';
+type NavTab = 'Now' | 'Reports' | 'Swimlanes' | 'Meetings' | 'CRM' | 'ToDo' | 'Settings';
 type ReportCategory = 'Ad Hoc' | 'Weekly' | 'Radar' | 'Team';
 
 interface AppUser {
@@ -754,67 +760,6 @@ const MemoryMap = () => {
 
 // --- Reports Section Components ---
 
-const ReportDetail = ({ report, onBack }: { report: ExtendedReport, onBack: () => void }) => {
-  return (
-    <div className="h-full flex flex-col bg-white dark:bg-zinc-900 rounded-r-xl">
-      {/* Header */}
-      <div className="px-8 py-6 border-b border-zinc-100 dark:border-zinc-800 flex items-start justify-between">
-        <div>
-          <button onClick={onBack} className="flex items-center gap-1 text-xs font-medium text-zinc-400 hover:text-zinc-600 mb-3 transition-colors md:hidden">
-            <ArrowLeft size={12} /> Back to Reports
-          </button>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">{report.category}</span>
-            <span className="text-xs text-zinc-400 font-mono">{report.dateRange}</span>
-          </div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">{report.title}</h1>
-          <div className="flex items-center gap-4 text-sm text-zinc-500">
-            <span>By {report.author}</span>
-            <span className="w-1 h-1 bg-zinc-300 rounded-full" />
-            <span>{report.readTime}</span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-           <button className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Share">
-             <ArrowUpRight size={18} />
-           </button>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto w-full">
-        <p className="text-lg text-zinc-600 dark:text-zinc-300 leading-relaxed mb-8 italic border-l-2 border-emerald-500 pl-4 py-1">
-          {report.summary}
-        </p>
-
-        <div className="space-y-8">
-          {report.content.map((section, idx) => (
-            <div key={idx} className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-              <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-3">{section.heading}</h2>
-              <p className="text-sm leading-7 text-zinc-700 dark:text-zinc-300 mb-4">{section.body}</p>
-              
-              {section.evidence.length > 0 && (
-                <div className="bg-zinc-50 dark:bg-zinc-800/30 rounded-lg border border-zinc-100 dark:border-zinc-800/50 p-4 space-y-2">
-                  <h4 className="text-[10px] uppercase tracking-widest text-zinc-400 font-semibold mb-1">Evidence</h4>
-                  {section.evidence.map((ev, i) => (
-                    <div key={i} className="flex gap-3 text-xs">
-                      <div className="w-1 h-1 bg-zinc-300 dark:bg-zinc-600 rounded-full mt-1.5 shrink-0" />
-                      <div className="flex-1">
-                        <span className="text-zinc-600 dark:text-zinc-300">{ev.text}</span>
-                        <span className="text-zinc-400 mx-1.5">•</span>
-                        <span className="font-mono text-zinc-400 text-[10px] uppercase border border-zinc-200 dark:border-zinc-700 px-1 py-px rounded">{ev.source}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Comprehensive report type definitions
 const REPORT_TYPES = [
@@ -869,6 +814,105 @@ const REPORT_TYPES = [
   { id: 'execution-readiness', name: 'Execution Readiness Report', question: 'Are we actually ready to execute this?', timing: 'On-demand', category: 'Risk', notes: 'Combines commitments + capacity' },
 ];
 
+// Helper types for report grouping
+type ReportGroupMode = 'date' | 'category';
+
+interface ReportGroup {
+  key: string;
+  label: string;
+  reports: ExtendedReport[];
+}
+
+// Helper to parse date from dateRange string
+function parseDateFromRange(dateRange: string): Date {
+  // Handle formats like "Jan 26 - Feb 01", "Q1 2026", "January 2026", "Feb 2026", etc.
+  const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const lowerRange = dateRange.toLowerCase();
+
+  // Try to extract month and year
+  let month = monthNames.findIndex(m => lowerRange.includes(m));
+  let year = 2026; // Default year
+  const yearMatch = dateRange.match(/20\d{2}/);
+  if (yearMatch) year = parseInt(yearMatch[0]);
+
+  // Try to get day
+  let day = 1;
+  const dayMatch = dateRange.match(/\b(\d{1,2})\b/);
+  if (dayMatch) day = parseInt(dayMatch[1]);
+
+  if (month >= 0) {
+    return new Date(year, month, day);
+  }
+
+  // Default to current date if can't parse
+  return new Date();
+}
+
+// Format date for sidebar display (e.g., "Feb 3")
+function formatReportDate(dateRange: string): string {
+  const date = parseDateFromRange(dateRange);
+  const monthShort = date.toLocaleDateString('en-US', { month: 'short' });
+  const day = date.getDate();
+  return `${monthShort} ${day}`;
+}
+
+// Get week number from date
+function getWeekNumber(dateRange: string): number {
+  const date = parseDateFromRange(dateRange);
+  const start = new Date(date.getFullYear(), 0, 1);
+  const diff = date.getTime() - start.getTime();
+  const oneWeek = 1000 * 60 * 60 * 24 * 7;
+  return Math.ceil(diff / oneWeek);
+}
+
+// Format date range for header (e.g., "February 2 - February 8, 2026")
+function formatFullDateRange(dateRange: string): string {
+  const date = parseDateFromRange(dateRange);
+  const monthFull = date.toLocaleDateString('en-US', { month: 'long' });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const endDay = day + 6; // Assume weekly
+  return `${monthFull} ${day} – ${monthFull} ${endDay}, ${year}`;
+}
+
+// Group reports by month
+function groupReportsByDate(reports: ExtendedReport[]): ReportGroup[] {
+  const groups = new Map<string, ReportGroup>();
+
+  for (const report of reports) {
+    const date = parseDateFromRange(report.dateRange);
+    const monthName = date.toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+    const key = `${date.getFullYear()}-${String(date.getMonth()).padStart(2, '0')}`;
+
+    if (!groups.has(key)) {
+      groups.set(key, { key, label: monthName, reports: [] });
+    }
+    groups.get(key)!.reports.push(report);
+  }
+
+  // Sort groups by date (most recent first)
+  return Array.from(groups.values()).sort((a, b) => b.key.localeCompare(a.key));
+}
+
+// Group reports by category
+function groupReportsByCategory(reports: ExtendedReport[]): ReportGroup[] {
+  const categoryOrder = ['Weekly', 'Radar', 'Team', 'Ad Hoc'];
+  const groups = new Map<string, ReportGroup>();
+
+  for (const report of reports) {
+    const category = report.category;
+    if (!groups.has(category)) {
+      groups.set(category, { key: category, label: category.toUpperCase(), reports: [] });
+    }
+    groups.get(category)!.reports.push(report);
+  }
+
+  // Sort groups by category order
+  return Array.from(groups.values()).sort((a, b) =>
+    categoryOrder.indexOf(a.key) - categoryOrder.indexOf(b.key)
+  );
+}
+
 const ReportsScreen = ({
   teams,
   users,
@@ -876,120 +920,454 @@ const ReportsScreen = ({
   teams: AppTeam[];
   users: AppUser[];
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(extendedReports[0]?.id || null);
   const [showNewReport, setShowNewReport] = useState(false);
   const [reportsState, setReportsState] = useState<ExtendedReport[]>(extendedReports);
   const [reportType, setReportType] = useState<ReportCategory>('Ad Hoc');
   const [reportDescription, setReportDescription] = useState('');
-  const [reportFrequency, setReportFrequency] = useState('Weekly');
-  const [selectedTeamId, setSelectedTeamId] = useState<string>('');
   const [selectedReportType, setSelectedReportType] = useState<typeof REPORT_TYPES[0] | null>(null);
-  const [reportSearchQuery, setReportSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [groupMode, setGroupMode] = useState<ReportGroupMode>('date');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [contentTab, setContentTab] = useState<'reports' | 'radar'>('reports');
+  const [sidebarWidth, setSidebarWidth] = useState(180);
+  const [isResizing, setIsResizing] = useState(false);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const positioningRef = React.useRef<HTMLDivElement>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
-  const categories = [
-    { id: 'All', label: 'All Reports', icon: Inbox },
-    { id: 'Ad Hoc', label: 'Ad Hoc', icon: FileText },
-    { id: 'Weekly', label: 'Weekly', icon: Calendar },
-    { id: 'Radar', label: 'Radar', icon: AlertTriangle },
-    { id: 'Team', label: 'Team', icon: Users },
-  ];
+  // Handle sidebar resize
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
 
-  const filteredReports = selectedCategory === 'All' 
-    ? reportsState 
-    : reportsState.filter(r => r.category === selectedCategory);
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = Math.min(Math.max(140, e.clientX - 56), 300); // 56px for nav, min 140, max 300
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  // Comment state
+  const [highlights, setHighlights] = useState<CommentHighlight[]>([]);
+  const [activeHighlightId, setActiveHighlight] = useState<string | null>(null);
+  const [pendingSelection, setPendingSelection] = useState<{ text: string; startOffset: number; endOffset: number } | null>(null);
+  const [isComposerOpen, setIsComposerOpen] = useState(false);
+
+  const toggleGroupCollapse = (groupKey: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(groupKey)) {
+        next.delete(groupKey);
+      } else {
+        next.add(groupKey);
+      }
+      return next;
+    });
+  };
+
+  const addComment = (text: string) => {
+    if (!pendingSelection || !selectedReportId) return;
+    const newHighlight: CommentHighlight = {
+      id: crypto.randomUUID(),
+      reportId: selectedReportId,
+      selectedText: pendingSelection.text,
+      startOffset: pendingSelection.startOffset,
+      endOffset: pendingSelection.endOffset,
+      comment: {
+        id: crypto.randomUUID(),
+        userName: users[0]?.name || 'You',
+        text,
+        createdAt: new Date(),
+      },
+    };
+    setHighlights(prev => [...prev, newHighlight]);
+    setPendingSelection(null);
+    setIsComposerOpen(false);
+    setActiveHighlight(newHighlight.id);
+  };
+
+  const updateComment = (highlightId: string, newText: string) => {
+    setHighlights(prev => prev.map(h =>
+      h.id === highlightId && h.comment ? { ...h, comment: { ...h.comment, text: newText } } : h
+    ));
+  };
+
+  const deleteComment = (highlightId: string) => {
+    setHighlights(prev => prev.filter(h => h.id !== highlightId));
+    if (activeHighlightId === highlightId) setActiveHighlight(null);
+  };
+
+  // Filter reports based on search and category
+  const filteredReports = React.useMemo(() => {
+    return reportsState.filter(report => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = report.title.toLowerCase().includes(query);
+        const matchesSummary = report.summary.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesSummary) return false;
+      }
+      // Category filter
+      if (selectedCategory && report.category !== selectedCategory) {
+        return false;
+      }
+      return true;
+    });
+  }, [reportsState, searchQuery, selectedCategory]);
+
+  // Group reports based on mode
+  const groupedReports = React.useMemo(() => {
+    return groupMode === 'date'
+      ? groupReportsByDate(filteredReports)
+      : groupReportsByCategory(filteredReports);
+  }, [filteredReports, groupMode]);
 
   const activeReport = reportsState.find(r => r.id === selectedReportId);
+  const hasActiveFilters = selectedCategory !== null;
+
+  // Track scroll progress
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      const progress = scrollHeight > clientHeight
+        ? scrollTop / (scrollHeight - clientHeight)
+        : 0;
+      setScrollProgress(progress);
+    }
+  };
+
+  React.useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
+  }, [selectedReportId]);
+
+  const clearFilters = () => {
+    setSelectedCategory(null);
+    setIsFilterOpen(false);
+  };
 
   return (
-    <div className="flex h-full gap-0 overflow-hidden">
-      {/* Left Sidebar - Categories */}
-      <div className="w-48 pt-6 pr-4 border-r border-zinc-200 dark:border-zinc-800 shrink-0 flex flex-col gap-1">
-        {categories.map(cat => (
-          <button
-            key={cat.id}
-            onClick={() => {
-              setSelectedCategory(cat.id);
-              setSelectedReportId(null);
-            }}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedCategory === cat.id ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
-          >
-            <cat.icon size={14} className={selectedCategory === cat.id ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400'} />
-            {cat.label}
-          </button>
-        ))}
-        
-        <div className="mt-4 pt-4 border-t border-zinc-100 dark:border-zinc-800">
-           <button
-             onClick={() => setShowNewReport(true)}
-             className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors w-full text-left"
-           >
-              <Plus size={14} />
-              New Report
-           </button>
-        </div>
-      </div>
-
-      {/* Middle/Main Area */}
-      <div className={`flex-1 flex overflow-hidden transition-all duration-300 ${selectedReportId ? 'md:mr-0' : ''}`}>
-        
-        {/* Report List */}
-        <div className={`${selectedReportId ? 'hidden md:flex md:w-80' : 'flex-1'} flex-col border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/30`}>
-          <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
-             <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">{selectedCategory === 'All' ? 'Inbox' : selectedCategory}</h2>
-             <span className="text-xs text-zinc-400">{filteredReports.length} items</span>
+    <div className="flex h-full overflow-hidden">
+      {/* Left Sidebar - Report List */}
+      <div
+        className="flex-none border-r border-zinc-200 dark:border-zinc-800 flex flex-col bg-zinc-50/50 dark:bg-zinc-950/50 relative"
+        style={{ width: sidebarWidth }}
+      >
+        {/* Resize handle */}
+        <div
+          onMouseDown={handleMouseDown}
+          className={`absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-emerald-500/50 transition-colors z-10 ${isResizing ? 'bg-emerald-500/50' : ''}`}
+        />
+        {/* Header */}
+        <div className="p-3 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-semibold text-[11px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Reports</span>
+            <button
+              onClick={() => setShowNewReport(true)}
+              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 transition-colors"
+              title="Settings"
+            >
+              <Settings size={12} />
+            </button>
           </div>
-          
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {filteredReports.map(report => (
-                <div 
-                  key={report.id}
-                  onClick={() => setSelectedReportId(report.id)}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedReportId === report.id ? 'bg-white dark:bg-zinc-900 border-emerald-500/50 shadow-md ring-1 ring-emerald-500/20' : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm'}`}
-                >
-                <div className="flex justify-between items-start mb-2">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-                    report.category === 'Weekly' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                    report.category === 'Radar' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                    'bg-zinc-100 text-zinc-500 border-zinc-200'
-                  }`}>
-                    {report.category}
-                  </span>
-                  <span className="text-[10px] font-mono text-zinc-400">{report.dateRange}</span>
-                </div>
-                <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-1 leading-snug">{report.title}</h3>
-                <p className="text-xs text-zinc-500 line-clamp-2 leading-relaxed">{report.summary}</p>
-                
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[8px] font-bold text-zinc-500">
-                    {report.author.charAt(0)}
-                  </div>
-                  <span className="text-[10px] text-zinc-400">{report.author}</span>
-                </div>
-              </div>
+
+          {/* Search */}
+          <div className="relative mb-3">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="w-full h-7 pl-7 pr-2 text-[11px] rounded bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            />
+          </div>
+
+          {/* Type Selection - always visible */}
+          <div className="space-y-1">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`w-full text-left px-2 py-1.5 text-[11px] rounded transition-colors ${
+                !selectedCategory
+                  ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium'
+                  : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
+              }`}
+            >
+              All Reports
+            </button>
+            {['Weekly', 'Radar', 'Team', 'Ad Hoc'].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+                className={`w-full text-left px-2 py-1.5 text-[11px] rounded transition-colors ${
+                  selectedCategory === cat
+                    ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-medium'
+                    : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
+                }`}
+              >
+                {cat}
+              </button>
             ))}
-            
-            {filteredReports.length === 0 && (
-              <div className="text-center py-10">
-                <p className="text-sm text-zinc-400">No reports in this category.</p>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Detail View */}
-        {selectedReportId ? (
-          <div className="flex-1 overflow-hidden h-full">
-            {activeReport && <ReportDetail report={activeReport} onBack={() => setSelectedReportId(null)} />}
+        {/* Report List - grouped with collapsible sections */}
+        <div className="flex-1 overflow-y-auto py-2">
+          {groupedReports.map((group) => {
+            const isCollapsed = collapsedGroups.has(group.key);
+            return (
+              <div key={group.key} className="mb-1">
+                {/* Group header - collapsible */}
+                <button
+                  onClick={() => toggleGroupCollapse(group.key)}
+                  className="w-full flex items-center gap-1 px-3 py-1.5 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"
+                >
+                  <ChevronRight
+                    size={10}
+                    className={`text-zinc-400 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
+                  />
+                  <span className="font-semibold text-[10px] uppercase tracking-wider text-zinc-400">
+                    {group.label}
+                  </span>
+                </button>
+
+                {/* Reports in this group */}
+                <AnimatePresence initial={false}>
+                  {!isCollapsed && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-2">
+                        {group.reports.map((report) => {
+                          const isSelected = selectedReportId === report.id;
+                          return (
+                            <button
+                              key={report.id}
+                              onClick={() => {
+                                setSelectedReportId(report.id);
+                                setScrollProgress(0);
+                                setActiveHighlight(null);
+                              }}
+                              className={`w-full text-left px-2 py-2 rounded-md transition-colors ${
+                                isSelected
+                                  ? 'bg-zinc-200/70 dark:bg-zinc-800'
+                                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
+                              }`}
+                            >
+                              <div className="text-[10px] text-zinc-400 mb-0.5">
+                                {formatReportDate(report.dateRange)}
+                              </div>
+                              <h3 className={`font-medium text-[12px] leading-tight line-clamp-2 ${
+                                isSelected ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 dark:text-zinc-400'
+                              }`}>
+                                {report.title}
+                              </h3>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+
+          {/* Empty state */}
+          {groupedReports.length === 0 && (
+            <div className="px-3 py-6 text-center">
+              <p className="text-[11px] text-zinc-400">No reports</p>
+              {hasActiveFilters && (
+                <button onClick={clearFilters} className="mt-1 text-[10px] text-emerald-600 hover:underline">
+                  Clear filter
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-3 border-t border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center gap-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] text-zinc-400">Auto-generated</span>
           </div>
-        ) : (
-          <div className="hidden md:flex flex-1 items-center justify-center text-zinc-300 dark:text-zinc-700 flex-col gap-4">
-             <FileText size={48} className="opacity-20" />
-             <p className="text-sm">Select a report to view details</p>
-          </div>
-        )}
+        </div>
       </div>
 
+      {/* Right Reading Pane */}
+      <div className="flex-1 overflow-hidden relative flex flex-col">
+        {/* Top header with tabs */}
+        <div className="shrink-0 px-8 py-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-end gap-4">
+          <button
+            onClick={() => setContentTab('reports')}
+            className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+              contentTab === 'reports'
+                ? 'text-zinc-900 dark:text-zinc-100'
+                : 'text-zinc-400 hover:text-zinc-600'
+            }`}
+          >
+            <FileText size={12} />
+            Reports
+          </button>
+          <button
+            onClick={() => setContentTab('radar')}
+            className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+              contentTab === 'radar'
+                ? 'text-zinc-900 dark:text-zinc-100'
+                : 'text-zinc-400 hover:text-zinc-600'
+            }`}
+          >
+            <BarChart2 size={12} />
+            Radar
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-hidden relative">
+          {/* Reading progress indicator */}
+          <motion.div
+            className="absolute top-0 left-0 right-0 h-[1px] bg-emerald-500 origin-left z-10"
+            style={{ scaleX: scrollProgress }}
+          />
+
+          {selectedReportId && activeReport ? (
+            <div
+              ref={scrollContainerRef}
+              className="h-full overflow-y-auto"
+            >
+              <div ref={positioningRef} className="relative min-h-full">
+                <div className="max-w-2xl mx-auto px-8 py-8 lg:px-12 lg:py-10">
+                  {/* Report Header - redesigned to match screenshot */}
+                  <div className="mb-8">
+                    {/* Week badge and date */}
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                        Week {getWeekNumber(activeReport.dateRange)}
+                      </span>
+                      <span className="text-xs text-zinc-400">
+                        {formatFullDateRange(activeReport.dateRange)}
+                      </span>
+                    </div>
+
+                    {/* Title */}
+                    <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-4 leading-tight">
+                      {activeReport.title}
+                    </h1>
+
+                    {/* Action buttons row */}
+                    <div className="flex items-center justify-end gap-3">
+                      <button className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 transition-colors">
+                        <ExternalLink size={14} />
+                      </button>
+                      <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs font-medium hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+                        <Sparkles size={12} />
+                        Review
+                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Content Sections with highlighting */}
+                  <HighlightedContent
+                    reportId={activeReport.id}
+                    highlights={highlights}
+                    activeHighlightId={activeHighlightId}
+                    setActiveHighlight={setActiveHighlight}
+                    contentRef={contentRef}
+                    pendingSelection={pendingSelection}
+                    setPendingSelection={setPendingSelection}
+                    isComposerOpen={isComposerOpen}
+                    setIsComposerOpen={setIsComposerOpen}
+                  >
+                    <div className="space-y-8">
+                      {activeReport.content.map((section, idx) => (
+                        <motion.div
+                          key={idx}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                        >
+                          <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+                            {section.heading}
+                          </h2>
+                          <p className="text-sm leading-7 text-zinc-700 dark:text-zinc-300 mb-4">
+                            {section.body}
+                          </p>
+
+                          {section.evidence.length > 0 && (
+                            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                              Sources
+                            </button>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </HighlightedContent>
+                </div>
+
+                {/* Comment Layer - positioned alongside content */}
+                <CommentLayer
+                  contentRef={contentRef}
+                  positioningRef={positioningRef}
+                  reportId={activeReport.id}
+                  highlights={highlights}
+                  activeHighlightId={activeHighlightId}
+                  setActiveHighlight={setActiveHighlight}
+                  onEdit={updateComment}
+                  onDelete={deleteComment}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <FileText className="w-8 h-8 text-zinc-300 dark:text-zinc-700 mx-auto mb-3" />
+                <p className="text-xs text-zinc-400">Select a report</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Comment Panel - slides in from right */}
+        <CommentPanel
+          isOpen={isComposerOpen}
+          pendingSelection={pendingSelection}
+          onSubmit={addComment}
+          onClose={() => {
+            setIsComposerOpen(false);
+            setPendingSelection(null);
+          }}
+        />
+      </div>
+
+      {/* New Report Modal */}
       {showNewReport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowNewReport(false)} />
@@ -1043,33 +1421,33 @@ const ReportsScreen = ({
                 >
                   <option value="">Select a report type...</option>
                   {(() => {
-                    let filteredReports: typeof REPORT_TYPES = [];
+                    let filteredReportTypes: typeof REPORT_TYPES = [];
 
                     if (reportType === 'Ad Hoc') {
-                      filteredReports = REPORT_TYPES.filter(rt =>
+                      filteredReportTypes = REPORT_TYPES.filter(rt =>
                         rt.timing.toLowerCase().includes('on-demand') ||
                         rt.timing.toLowerCase().includes('post-project')
                       );
                     } else if (reportType === 'Weekly') {
-                      filteredReports = REPORT_TYPES.filter(rt =>
+                      filteredReportTypes = REPORT_TYPES.filter(rt =>
                         rt.timing.toLowerCase().includes('weekly') ||
                         rt.timing.toLowerCase().includes('daily') ||
                         rt.timing.toLowerCase().includes('continuous')
                       );
                     } else if (reportType === 'Radar') {
-                      filteredReports = REPORT_TYPES.filter(rt =>
+                      filteredReportTypes = REPORT_TYPES.filter(rt =>
                         rt.category === 'Radar' ||
                         rt.category === 'Risk' ||
                         rt.category === 'Meta'
                       );
                     } else if (reportType === 'Team') {
-                      filteredReports = REPORT_TYPES.filter(rt =>
+                      filteredReportTypes = REPORT_TYPES.filter(rt =>
                         rt.category === 'Team' ||
                         rt.category === 'Institutional'
                       );
                     }
 
-                    return filteredReports.map(rt => (
+                    return filteredReportTypes.map(rt => (
                       <option key={rt.id} value={rt.id}>
                         {rt.name}
                       </option>
@@ -1141,6 +1519,12 @@ const ReportsScreen = ({
                       summary: reportDescription || selectedReportType.question,
                       status: 'ready',
                       author: users[0]?.name || 'You',
+                      readTime: '3 min read',
+                      content: [{
+                        heading: 'Summary',
+                        body: reportDescription || selectedReportType.question,
+                        evidence: []
+                      }]
                     },
                     ...prev,
                   ]));
@@ -1816,7 +2200,7 @@ import { MeetingDetailModal } from './components/MeetingDetailModal';
 import { PersonDetailPanel } from './components/PersonDetailPanel';
 
 import { Toaster } from './components/ui/sonner';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: { setMode: (m: ViewMode) => void, setIsRecording: (b: boolean) => void, meetings: MeetingBrief[], onTogglePrivacy: (id: string) => void }) => {
   const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
@@ -2595,6 +2979,7 @@ const ExpandedState = ({
   const [activeTab, setActiveTab] = useState<NavTab>('Now');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const privateCount = meetings.filter(m => m.isPrivate).length;
   const totalCount = meetings.length;
@@ -2646,6 +3031,7 @@ const ExpandedState = ({
           {[
             { id: 'Now', label: 'Home', icon: Layout },
             { id: 'Meetings', label: 'Meetings', icon: Calendar },
+            { id: 'CRM', label: 'CRM', icon: Users },
             { id: 'Reports', label: 'Reports', icon: BarChart2 },
             { id: 'Swimlanes', label: 'Swimlanes', icon: GitCommit },
             { id: 'ToDo', label: 'Commitments & Asks', icon: CheckCircle2 },
@@ -2742,13 +3128,16 @@ const ExpandedState = ({
           <AnimatePresence mode="wait">
             {activeTab === 'Now' && (
               <motion.div key="now" className="h-full" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-                 <NowScreen 
-                    commitments={commitments} 
-                    onToggle={onToggleCommitment} 
-                    alerts={alerts}
-                    meetingBriefs={meetingBriefs}
-                    onNavigate={setActiveTab}
-                 />
+                 <DynamicBackground className="h-full">
+                   <NowScreen
+                      commitments={[...commitments, ...asyncCommitments]}
+                      onToggle={onToggleCommitment}
+                      alerts={alerts}
+                      meetingBriefs={meetingBriefs}
+                      relationshipAlerts={relationshipAlerts}
+                      onNavigate={setActiveTab}
+                   />
+                 </DynamicBackground>
               </motion.div>
             )}
             {activeTab === 'Meetings' && (
@@ -2761,9 +3150,14 @@ const ExpandedState = ({
                 <ReportsScreen teams={teams} users={users} />
               </motion.div>
             )}
+            {activeTab === 'CRM' && (
+              <motion.div key="crm" className="h-full" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
+                <CrmPage contacts={contacts} companies={companies} />
+              </motion.div>
+            )}
             {activeTab === 'Swimlanes' && (
               <motion.div key="swimlanes" className="h-full" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}>
-                <SwimlanesScreen users={users} />
+                <NewSwimlanesScreen />
               </motion.div>
             )}
             {activeTab === 'Settings' && (
@@ -2784,7 +3178,11 @@ const ExpandedState = ({
             )}
           </AnimatePresence>
         </div>
+
       </main>
+
+      {/* Chat Interface Modal */}
+      <ChatInterface isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </motion.div>
   );
 };
@@ -2977,12 +3375,12 @@ export default function App() {
             />
           )}
           {mode === 'expanded' && (
-            <ExpandedState 
-              key="expanded" 
-              setMode={setMode} 
+            <ExpandedState
+              key="expanded"
+              setMode={setMode}
               setIsRecording={setIsRecording}
-              commitments={commitmentsData} 
-              onToggleCommitment={handleToggleCommitment} 
+              commitments={commitmentsData}
+              onToggleCommitment={handleToggleCommitment}
               onAddCommitment={handleAddCommitment}
               onTogglePrivacy={handleToggleMeetingPrivacy}
               meetings={meetingsData}
@@ -2995,6 +3393,9 @@ export default function App() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Persistent Chat Bar - rendered OUTSIDE the overflow-hidden container */}
+      {mode === 'expanded' && <PersistentChatBar />}
     </ThemeProvider>
   );
 }

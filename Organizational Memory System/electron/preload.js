@@ -15,4 +15,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('commit-meeting', handler);
     return () => ipcRenderer.removeListener('commit-meeting', handler);
   },
+
+  // Haptic feedback (macOS only via native module or shell command)
+  triggerHaptic: (type) => ipcRenderer.send('trigger-haptic', type),
+
+  // Sound feedback
+  playSound: (soundId) => ipcRenderer.send('play-sound', soundId),
+
+  // Desktop notification
+  showNotification: (title, body) => ipcRenderer.send('show-notification', { title, body }),
 });

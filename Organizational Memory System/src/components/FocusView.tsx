@@ -1,0 +1,515 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  X,
+  ArrowLeft,
+  AlertTriangle,
+  CheckCircle2,
+  Calendar,
+  Clock,
+  Users,
+  ExternalLink,
+  Target,
+  Zap,
+  UserPlus,
+  Check,
+  UserCircle,
+  Send
+} from 'lucide-react';
+import { AttentionItem, AttentionType, EvidenceItem, CollaborationComment } from '../types';
+import { getRelativeTime, calculateAttentionScore, getScoreLabel } from '../utils/AttentionScore';
+import { getActionsForItem, getActionButtonClass } from '../utils/ActionPrimitives';
+import { CollaborationThread } from './CollaborationThread';
+
+// Category styling
+const CATEGORY_CONFIG: Record<AttentionType, {
+  icon: React.ElementType;
+  label: string;
+  bgColor: string;
+  textColor: string;
+  borderColor: string;
+}> = {
+  risk: {
+    icon: AlertTriangle,
+    label: 'RISK',
+    bgColor: 'bg-red-50 dark:bg-red-900/20',
+    textColor: 'text-red-600 dark:text-red-400',
+    borderColor: 'border-red-200 dark:border-red-800'
+  },
+  misalignment: {
+    icon: Target,
+    label: 'MISALIGNMENT',
+    bgColor: 'bg-amber-50 dark:bg-amber-900/20',
+    textColor: 'text-amber-600 dark:text-amber-400',
+    borderColor: 'border-amber-200 dark:border-amber-800'
+  },
+  blocker: {
+    icon: Zap,
+    label: 'BLOCKER',
+    bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+    textColor: 'text-orange-600 dark:text-orange-400',
+    borderColor: 'border-orange-200 dark:border-orange-800'
+  },
+  commitment: {
+    icon: CheckCircle2,
+    label: 'COMMITMENT',
+    bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    textColor: 'text-blue-600 dark:text-blue-400',
+    borderColor: 'border-blue-200 dark:border-blue-800'
+  },
+  meeting: {
+    icon: Calendar,
+    label: 'MEETING',
+    bgColor: 'bg-violet-50 dark:bg-violet-900/20',
+    textColor: 'text-violet-600 dark:text-violet-400',
+    borderColor: 'border-violet-200 dark:border-violet-800'
+  },
+  relationship: {
+    icon: UserCircle,
+    label: 'RELATIONSHIP',
+    bgColor: 'bg-pink-50 dark:bg-pink-900/20',
+    textColor: 'text-pink-600 dark:text-pink-400',
+    borderColor: 'border-pink-200 dark:border-pink-800'
+  },
+  followup: {
+    icon: Send,
+    label: 'FOLLOW-UP',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-900/20',
+    textColor: 'text-cyan-600 dark:text-cyan-400',
+    borderColor: 'border-cyan-200 dark:border-cyan-800'
+  }
+};
+
+interface FocusViewProps {
+  item: AttentionItem | null;
+  onClose: () => void;
+  onAction: (actionId: string, item: AttentionItem) => void;
+}
+
+// Extend AttentionItem to include optional thread
+interface AttentionItemWithThread extends AttentionItem {
+  thread?: {
+    comments: CollaborationComment[];
+    participants: string[];
+  };
+}
+
+// Mock suggested collaborators - in a real app, this would come from your team/organization data
+const SUGGESTED_COLLABORATORS = [
+  { id: '1', name: 'Sarah Chen', role: 'Product Lead', avatar: 'SC' },
+  { id: '2', name: 'Mike Rodriguez', role: 'Engineering Manager', avatar: 'MR' },
+  { id: '3', name: 'Emily Watson', role: 'Legal Counsel', avatar: 'EW' },
+  { id: '4', name: 'James Park', role: 'Finance Director', avatar: 'JP' },
+  { id: '5', name: 'Lisa Thompson', role: 'Operations Lead', avatar: 'LT' },
+];
+
+export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction }) => {
+  const [isCollaborating, setIsCollaborating] = useState(false);
+  const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
+  const [threadStarted, setThreadStarted] = useState(false);
+
+  if (!item) return null;
+
+  const attentionType: AttentionType = item.attentionType ||
+    (item.itemType === 'alert' ? 'risk' :
+     item.itemType === 'meeting' ? 'meeting' :
+     item.itemType === 'relationship' ? 'relationship' : 'commitment');
+
+  const config = CATEGORY_CONFIG[attentionType];
+  const CategoryIcon = config.icon;
+  const score = calculateAttentionScore(item);
+  const scoreLabel = getScoreLabel(score);
+
+  // Get full content based on item type
+  const getTitle = (): string => item.title;
+
+  const getContext = (): string => {
+    switch (item.itemType) {
+      case 'alert':
+        return item.description;
+      case 'commitment':
+        return item.context || '';
+      case 'meeting':
+        return item.summary;
+      case 'relationship':
+        return item.description;
+      default:
+        return '';
+    }
+  };
+
+  const getTimestamp = (): string => {
+    switch (item.itemType) {
+      case 'alert':
+        return item.timestamp;
+      case 'commitment':
+        return item.dueDate || '';
+      case 'meeting':
+        return item.time;
+      case 'relationship':
+        return `Last contact: ${item.lastContactDate}`;
+      default:
+        return '';
+    }
+  };
+
+  // Get actions
+  const actions = getActionsForItem(item);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          onClick={e => e.stopPropagation()}
+          className="w-full max-w-2xl max-h-[85vh] bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+        >
+          {/* Header */}
+          <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800">
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+            >
+              <ArrowLeft size={16} />
+              <span>Back</span>
+            </button>
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full ${config.bgColor} ${config.textColor} border ${config.borderColor}`}>
+              <CategoryIcon size={12} strokeWidth={2.5} />
+              <span className="text-[10px] font-bold tracking-wider">{config.label}</span>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {/* Title */}
+            <div>
+              <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                {getTitle()}
+              </h1>
+              <div className="flex items-center gap-3 text-xs text-zinc-500">
+                <span className="flex items-center gap-1">
+                  <Clock size={12} />
+                  {getTimestamp()}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  score >= 7 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                  score >= 5 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                  'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                }`}>
+                  {scoreLabel} Priority
+                </span>
+              </div>
+            </div>
+
+            {/* Context */}
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Context</h2>
+              <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                {getContext()}
+              </p>
+            </div>
+
+            {/* Why this surfaced - with sources as subtle inline tags */}
+            {item.memoryRationale && (
+              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                      <path d="M2 17l10 5 10-5"/>
+                      <path d="M2 12l10 5 10-5"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Why this surfaced</h3>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-2">
+                      {item.memoryRationale}
+                    </p>
+                    {/* Sources - subtle, one-click access (Principle 4) */}
+                    {item.evidence && item.evidence.length > 0 && (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] uppercase tracking-wider text-zinc-400">Sources:</span>
+                        {item.evidence.map((evidence, index) => (
+                          <button
+                            key={index}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-full text-zinc-600 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                          >
+                            <span>{evidence.type}</span>
+                            <ExternalLink size={10} className="opacity-50" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Collaborators */}
+            {item.collaborators && item.collaborators.length > 0 && (
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-2">
+                  <Users size={12} />
+                  People Involved ({item.collaborators.length})
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {item.collaborators.map((person, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full"
+                    >
+                      <div className="w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600 flex items-center justify-center text-[9px] font-medium text-zinc-600 dark:text-zinc-300">
+                        {person.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-xs text-zinc-700 dark:text-zinc-300">{person}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Collaboration Section - Only shown when Collaborate is clicked */}
+            <AnimatePresence>
+              {isCollaborating && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="border-t border-zinc-200 dark:border-zinc-800 pt-4 overflow-hidden"
+                >
+                  {!threadStarted ? (
+                    // People Selector - Choose who to bring in
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-2">
+                          <UserPlus size={12} />
+                          Bring people into this conversation
+                        </h2>
+                        <button
+                          onClick={() => setIsCollaborating(false)}
+                          className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
+                      {/* Suggested collaborators */}
+                      <div className="space-y-1.5">
+                        {SUGGESTED_COLLABORATORS.map((person) => {
+                          const isSelected = selectedCollaborators.includes(person.id);
+                          return (
+                            <button
+                              key={person.id}
+                              onClick={() => {
+                                setSelectedCollaborators(prev =>
+                                  isSelected
+                                    ? prev.filter(id => id !== person.id)
+                                    : [...prev, person.id]
+                                );
+                              }}
+                              className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg border transition-all ${
+                                isSelected
+                                  ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                                  : 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-600'
+                              }`}
+                            >
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium ${
+                                isSelected
+                                  ? 'bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300'
+                                  : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+                              }`}>
+                                {person.avatar}
+                              </div>
+                              <div className="flex-1 text-left">
+                                <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
+                                  {person.name}
+                                </div>
+                                <div className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                                  {person.role}
+                                </div>
+                              </div>
+                              {isSelected && (
+                                <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+                                  <Check size={10} className="text-white" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Start thread button */}
+                      <button
+                        onClick={() => {
+                          if (selectedCollaborators.length > 0) {
+                            setThreadStarted(true);
+                          }
+                        }}
+                        disabled={selectedCollaborators.length === 0}
+                        className={`w-full py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                          selectedCollaborators.length > 0
+                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {selectedCollaborators.length > 0
+                          ? `Start thread with ${selectedCollaborators.length} ${selectedCollaborators.length === 1 ? 'person' : 'people'}`
+                          : 'Select people to collaborate with'
+                        }
+                      </button>
+                    </div>
+                  ) : (
+                    // Collaboration Thread - Active conversation
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500">
+                            Thread
+                          </h2>
+                          <div className="flex -space-x-1.5">
+                            {selectedCollaborators.slice(0, 3).map((id) => {
+                              const person = SUGGESTED_COLLABORATORS.find(p => p.id === id);
+                              return person ? (
+                                <div
+                                  key={id}
+                                  className="w-5 h-5 rounded-full bg-emerald-200 dark:bg-emerald-800 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-[8px] font-medium text-emerald-700 dark:text-emerald-300"
+                                >
+                                  {person.avatar}
+                                </div>
+                              ) : null;
+                            })}
+                            {selectedCollaborators.length > 3 && (
+                              <div className="w-5 h-5 rounded-full bg-zinc-200 dark:bg-zinc-700 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-[8px] font-medium text-zinc-600 dark:text-zinc-400">
+                                +{selectedCollaborators.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setThreadStarted(false);
+                            setIsCollaborating(false);
+                            setSelectedCollaborators([]);
+                          }}
+                          className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+                        >
+                          Close thread
+                        </button>
+                      </div>
+                      <CollaborationThread
+                        thread={(item as AttentionItemWithThread).thread}
+                        participants={[
+                          ...(item.collaborators || []),
+                          ...selectedCollaborators.map(id =>
+                            SUGGESTED_COLLABORATORS.find(p => p.id === id)?.name || ''
+                          ).filter(Boolean)
+                        ]}
+                        onAddComment={(content, mentions) => {
+                          console.log('New comment:', content, 'Mentions:', mentions);
+                        }}
+                      />
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Meeting-specific content */}
+            {item.itemType === 'meeting' && item.preMeetingBrief && (
+              <div className="space-y-3">
+                <div>
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Meeting Context</h2>
+                  <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{item.preMeetingBrief.context}</p>
+                </div>
+                {item.preMeetingBrief.goals && item.preMeetingBrief.goals.length > 0 && (
+                  <div>
+                    <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Goals</h2>
+                    <ul className="space-y-1">
+                      {item.preMeetingBrief.goals.map((goal, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                          <span className="text-blue-500 mt-0.5">•</span>
+                          {goal}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer with Actions */}
+          <div className="shrink-0 px-5 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {/* Context actions */}
+                {actions.context.map(action => (
+                  <button
+                    key={action.id}
+                    onClick={() => onAction(action.id, item)}
+                    className={getActionButtonClass(action.category)}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Collaborate actions - intercept to show collaboration UI */}
+                {actions.collaborate.map(action => (
+                  <button
+                    key={action.id}
+                    onClick={() => {
+                      if (action.id === 'delegate') {
+                        // Toggle collaboration mode instead of calling onAction
+                        setIsCollaborating(!isCollaborating);
+                        if (isCollaborating) {
+                          // If closing, reset state
+                          setThreadStarted(false);
+                          setSelectedCollaborators([]);
+                        }
+                      } else {
+                        onAction(action.id, item);
+                      }
+                    }}
+                    className={`${getActionButtonClass(action.category)} ${
+                      isCollaborating ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
+                    }`}
+                  >
+                    {isCollaborating ? 'Cancel' : action.label}
+                  </button>
+                ))}
+                {/* Execute actions (primary) */}
+                {actions.execute.map(action => (
+                  <button
+                    key={action.id}
+                    onClick={() => onAction(action.id, item)}
+                    className={getActionButtonClass(action.category)}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+export default FocusView;

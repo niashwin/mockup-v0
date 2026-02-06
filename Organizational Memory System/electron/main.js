@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Notification, shell } = require('electron');
+const { exec } = require('child_process');
 const path = require('path');
 
 let mainWindow;
@@ -136,4 +137,97 @@ ipcMain.on('hide-main', () => {
 ipcMain.on('commit-meeting', (_, payload) => {
   if (!mainWindow) return;
   mainWindow.webContents.send('commit-meeting', payload);
+});
+
+/**
+ * Sound mapping - maps semantic sound IDs to macOS system sounds
+ * These sounds provide audio feedback for user actions (Principle 7 & 10)
+ */
+const SOUND_MAP = {
+  // Completion sounds
+  complete: 'Glass',      // Subtle, satisfying completion
+  celebrate: 'Hero',      // Celebratory for streaks/milestones
+  success: 'Blow',        // Quick success acknowledgment
+
+  // Action sounds
+  snooze: 'Submarine',    // Soft, indicates deferral
+  delegate: 'Morse',      // Indicates handoff
+
+  // Alert sounds
+  warning: 'Basso',       // Low tone for warnings
+  error: 'Sosumi',        // Error indication
+
+  // Interaction sounds
+  tap: 'Tink',            // Light tap feedback
+  pop: 'Pop',             // UI pop/appear
+};
+
+/**
+ * Haptic feedback handler
+ * On macOS, we use system sounds as haptic-like feedback since
+ * true haptics require Force Touch trackpad and native modules.
+ *
+ * The audio cues serve as "audio haptics" - short, subtle sounds
+ * that acknowledge user actions (Principle 7: Reward bias toward action)
+ */
+ipcMain.on('trigger-haptic', (event, type) => {
+  if (process.platform !== 'darwin') return;
+
+  // Map haptic types to appropriate sounds
+  const hapticSoundMap = {
+    light: 'Tink',
+    medium: 'Pop',
+    heavy: 'Blow',
+    success: 'Glass',
+    warning: 'Basso',
+    error: 'Sosumi',
+  };
+
+  const soundName = hapticSoundMap[type] || 'Tink';
+  const soundPath = `/System/Library/Sounds/${soundName}.aiff`;
+
+  // Play at reduced volume for subtle haptic-like feedback
+  exec(`afplay "${soundPath}" -v 0.3`, (err) => {
+    if (err) {
+      // Fallback to system beep if sound file not found
+      shell.beep();
+    }
+  });
+});
+
+/**
+ * Sound feedback handler
+ * Plays macOS system sounds for various app events
+ *
+ * Implements Principle 10: "Haptic/sound on completion"
+ * Implements Principle 7: "Reward bias toward action"
+ */
+ipcMain.on('play-sound', (event, soundId) => {
+  if (process.platform !== 'darwin') {
+    // Fallback for non-macOS: use system beep
+    shell.beep();
+    return;
+  }
+
+  const soundName = SOUND_MAP[soundId] || SOUND_MAP.tap;
+  const soundPath = `/System/Library/Sounds/${soundName}.aiff`;
+
+  // Full volume for intentional sound feedback
+  exec(`afplay "${soundPath}"`, (err) => {
+    if (err) {
+      // Fallback to system beep
+      shell.beep();
+    }
+  });
+});
+
+// Desktop notification handler
+ipcMain.on('show-notification', (event, { title, body }) => {
+  if (Notification.isSupported()) {
+    const notification = new Notification({
+      title: title || 'Sentra',
+      body: body || ''
+    });
+    notification.show();
+  }
 });
