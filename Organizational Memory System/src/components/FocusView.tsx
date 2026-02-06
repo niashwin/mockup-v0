@@ -185,6 +185,8 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
   const [isAddingPeople, setIsAddingPeople] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [addedInvitees, setAddedInvitees] = useState<Array<{ id: string; name: string; email: string; isInternal: boolean; company?: string }>>([]);
+  // Tracks invitees that have been "sent" - they show in People Involved
+  const [sentInvitees, setSentInvitees] = useState<Array<{ id: string; name: string; email: string; isInternal: boolean }>>([]);
 
   // Filter people based on search
   const filteredPeople = searchQuery.length > 0 ? [
@@ -326,23 +328,51 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
                   </div>
                 )}
 
-                {/* People Involved for meetings */}
-                {item.collaborators && item.collaborators.length > 0 && (
+                {/* People Involved for meetings - includes original + newly invited */}
+                {((item.collaborators && item.collaborators.length > 0) || sentInvitees.length > 0) && (
                   <div>
                     <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2 flex items-center gap-2">
                       <Users size={12} />
-                      People Involved ({item.collaborators.length})
+                      People Involved ({(item.collaborators?.length || 0) + sentInvitees.length})
                     </h2>
                     <div className="flex flex-wrap gap-2">
-                      {item.collaborators.map((person, index) => (
+                      {/* Original collaborators */}
+                      {item.collaborators?.map((person, index) => (
                         <div
-                          key={index}
+                          key={`orig-${index}`}
                           className="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full"
                         >
                           <div className="w-4 h-4 rounded-full bg-zinc-300 dark:bg-zinc-600 flex items-center justify-center text-[9px] font-medium text-zinc-600 dark:text-zinc-300">
                             {person.charAt(0).toUpperCase()}
                           </div>
                           <span className="text-xs text-zinc-700 dark:text-zinc-300">{person}</span>
+                        </div>
+                      ))}
+                      {/* Newly invited people */}
+                      {sentInvitees.map((person) => (
+                        <div
+                          key={person.id}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                            person.isInternal
+                              ? 'bg-violet-100 dark:bg-violet-900/30'
+                              : 'bg-emerald-100 dark:bg-emerald-900/30'
+                          }`}
+                        >
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-medium ${
+                            person.isInternal
+                              ? 'bg-violet-300 dark:bg-violet-700 text-violet-700 dark:text-violet-200'
+                              : 'bg-emerald-300 dark:bg-emerald-700 text-emerald-700 dark:text-emerald-200'
+                          }`}>
+                            {(person.name || person.email).charAt(0).toUpperCase()}
+                          </div>
+                          <span className={`text-xs ${
+                            person.isInternal
+                              ? 'text-violet-700 dark:text-violet-300'
+                              : 'text-emerald-700 dark:text-emerald-300'
+                          }`}>
+                            {person.name || person.email}
+                          </span>
+                          <span className="text-[9px] text-zinc-400">invited</span>
                         </div>
                       ))}
                     </div>
@@ -739,18 +769,27 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
                       {/* Send - adds invitees to People Involved */}
                       <button
                         onClick={() => {
+                          // Add invitees to sentInvitees so they show in People Involved
+                          setSentInvitees(prev => [
+                            ...prev,
+                            ...addedInvitees.map(p => ({
+                              id: p.id,
+                              name: p.name,
+                              email: p.email,
+                              isInternal: p.isInternal
+                            }))
+                          ]);
                           // In a real app, this would call calendar API to send invites
-                          // and update the item's collaborators list
                           console.log('Sending calendar invites to:', addedInvitees);
                           onAction('send-calendar-invite', item);
                           setIsAddingPeople(false);
                           setSearchQuery('');
                           setAddedInvitees([]);
                         }}
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-sm"
                       >
-                        <Send size={12} />
-                        Send
+                        <Send size={14} />
+                        Send Invite
                       </button>
                     </>
                   ) : (
