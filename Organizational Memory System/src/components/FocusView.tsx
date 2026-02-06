@@ -14,12 +14,70 @@ import {
   UserPlus,
   Check,
   UserCircle,
-  Send
+  Send,
+  Mail,
+  Video,
+  MessageSquare,
+  Phone
 } from 'lucide-react';
 import { AttentionItem, AttentionType, EvidenceItem, CollaborationComment } from '../types';
-import { getRelativeTime, calculateAttentionScore, getScoreLabel } from '../utils/AttentionScore';
-import { getActionsForItem, getActionButtonClass } from '../utils/ActionPrimitives';
+import { getRelativeTime } from '../utils/AttentionScore';
 import { CollaborationThread } from './CollaborationThread';
+
+// Get contextual next step actions based on item type
+function getNextStepActions(item: AttentionItem): Array<{ id: string; label: string; icon: React.ElementType; primary?: boolean }> {
+  const type = item.attentionType || item.itemType;
+
+  switch (type) {
+    case 'risk':
+    case 'alert':
+      return [
+        { id: 'acknowledge', label: 'Acknowledge', icon: CheckCircle2, primary: true },
+        { id: 'escalate', label: 'Escalate', icon: UserPlus }
+      ];
+    case 'misalignment':
+      return [
+        { id: 'schedule-sync', label: 'Schedule Sync', icon: Calendar, primary: true },
+        { id: 'send-message', label: 'Send Message', icon: MessageSquare }
+      ];
+    case 'blocker':
+      return [
+        { id: 'resolve', label: 'Mark Resolved', icon: CheckCircle2, primary: true },
+        { id: 'escalate', label: 'Escalate', icon: UserPlus }
+      ];
+    case 'commitment':
+      if (item.itemType === 'commitment' && item.status === 'overdue') {
+        return [
+          { id: 'mark-done', label: 'Mark Done', icon: CheckCircle2, primary: true },
+          { id: 'send-email', label: 'Send Email', icon: Mail },
+          { id: 'reschedule', label: 'Reschedule', icon: Calendar }
+        ];
+      }
+      return [
+        { id: 'mark-done', label: 'Mark Done', icon: CheckCircle2, primary: true },
+        { id: 'send-email', label: 'Send Email', icon: Mail }
+      ];
+    case 'meeting':
+      return [
+        { id: 'join-meeting', label: 'Join Now', icon: Video, primary: true },
+        { id: 'reschedule', label: 'Reschedule', icon: Calendar }
+      ];
+    case 'relationship':
+      return [
+        { id: 'send-email', label: 'Send Email', icon: Mail, primary: true },
+        { id: 'schedule-call', label: 'Schedule Call', icon: Phone }
+      ];
+    case 'followup':
+      return [
+        { id: 'send-followup', label: 'Send Follow-up', icon: Send, primary: true },
+        { id: 'schedule-call', label: 'Schedule Call', icon: Phone }
+      ];
+    default:
+      return [
+        { id: 'mark-done', label: 'Mark Done', icon: CheckCircle2, primary: true }
+      ];
+  }
+}
 
 // Category styling
 const CATEGORY_CONFIG: Record<AttentionType, {
@@ -117,8 +175,7 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
 
   const config = CATEGORY_CONFIG[attentionType];
   const CategoryIcon = config.icon;
-  const score = calculateAttentionScore(item);
-  const scoreLabel = getScoreLabel(score);
+  const nextStepActions = getNextStepActions(item);
 
   // Get full content based on item type
   const getTitle = (): string => item.title;
@@ -152,9 +209,6 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
         return '';
     }
   };
-
-  // Get actions
-  const actions = getActionsForItem(item);
 
   return (
     <AnimatePresence>
@@ -201,18 +255,9 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
               <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
                 {getTitle()}
               </h1>
-              <div className="flex items-center gap-3 text-xs text-zinc-500">
-                <span className="flex items-center gap-1">
-                  <Clock size={12} />
-                  {getTimestamp()}
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                  score >= 7 ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                  score >= 5 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                  'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
-                }`}>
-                  {scoreLabel} Priority
-                </span>
+              <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                <Clock size={12} />
+                <span>{getTimestamp()}</span>
               </div>
             </div>
 
@@ -224,38 +269,30 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
               </p>
             </div>
 
-            {/* Why this surfaced - with sources as subtle inline tags */}
+            {/* Why this surfaced */}
             {item.memoryRationale && (
-              <div className="p-3 rounded-lg bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-                <div className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-amber-600 dark:text-amber-400">
-                      <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                      <path d="M2 17l10 5 10-5"/>
-                      <path d="M2 12l10 5 10-5"/>
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Why this surfaced</h3>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-2">
-                      {item.memoryRationale}
-                    </p>
-                    {/* Sources - subtle, one-click access (Principle 4) */}
-                    {item.evidence && item.evidence.length > 0 && (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] uppercase tracking-wider text-zinc-400">Sources:</span>
-                        {item.evidence.map((evidence, index) => (
-                          <button
-                            key={index}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-full text-zinc-600 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
-                          >
-                            <span>{evidence.type}</span>
-                            <ExternalLink size={10} className="opacity-50" />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Why This Surfaced</h2>
+                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                  {item.memoryRationale}
+                </p>
+              </div>
+            )}
+
+            {/* Sources */}
+            {item.evidence && item.evidence.length > 0 && (
+              <div>
+                <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Sources</h2>
+                <div className="flex flex-wrap gap-2">
+                  {item.evidence.map((evidence, index) => (
+                    <button
+                      key={index}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-600 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                    >
+                      <span>{evidence.type}</span>
+                      <ExternalLink size={10} className="opacity-60" />
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -456,53 +493,61 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
           {/* Footer with Actions */}
           <div className="shrink-0 px-5 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
             <div className="flex items-center justify-between">
+              {/* Left: View Source */}
+              <button
+                onClick={() => onAction('view-source', item)}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+              >
+                <ExternalLink size={12} />
+                View Source
+              </button>
+
+              {/* Right: Collaborate + Next Steps + Snooze */}
               <div className="flex items-center gap-2">
-                {/* Context actions */}
-                {actions.context.map(action => (
-                  <button
-                    key={action.id}
-                    onClick={() => onAction(action.id, item)}
-                    className={getActionButtonClass(action.category)}
-                  >
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Collaborate actions - intercept to show collaboration UI */}
-                {actions.collaborate.map(action => (
-                  <button
-                    key={action.id}
-                    onClick={() => {
-                      if (action.id === 'delegate') {
-                        // Toggle collaboration mode instead of calling onAction
-                        setIsCollaborating(!isCollaborating);
-                        if (isCollaborating) {
-                          // If closing, reset state
-                          setThreadStarted(false);
-                          setSelectedCollaborators([]);
-                        }
-                      } else {
-                        onAction(action.id, item);
-                      }
-                    }}
-                    className={`${getActionButtonClass(action.category)} ${
-                      isCollaborating ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
-                    }`}
-                  >
-                    {isCollaborating ? 'Cancel' : action.label}
-                  </button>
-                ))}
-                {/* Execute actions (primary) */}
-                {actions.execute.map(action => (
-                  <button
-                    key={action.id}
-                    onClick={() => onAction(action.id, item)}
-                    className={getActionButtonClass(action.category)}
-                  >
-                    {action.label}
-                  </button>
-                ))}
+                {/* Collaborate */}
+                <button
+                  onClick={() => {
+                    setIsCollaborating(!isCollaborating);
+                    if (isCollaborating) {
+                      setThreadStarted(false);
+                      setSelectedCollaborators([]);
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors ${
+                    isCollaborating ? 'ring-2 ring-emerald-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
+                  }`}
+                >
+                  <UserPlus size={12} />
+                  {isCollaborating ? 'Cancel' : 'Collaborate'}
+                </button>
+
+                {/* Contextual Next Step Actions */}
+                {nextStepActions.map((action) => {
+                  const ActionIcon = action.icon;
+                  return (
+                    <button
+                      key={action.id}
+                      onClick={() => onAction(action.id, item)}
+                      className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
+                        action.primary
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                          : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40'
+                      }`}
+                    >
+                      <ActionIcon size={12} />
+                      {action.label}
+                    </button>
+                  );
+                })}
+
+                {/* Snooze */}
+                <button
+                  onClick={() => onAction('snooze', item)}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  <Clock size={12} />
+                  Snooze
+                </button>
               </div>
             </div>
           </div>
