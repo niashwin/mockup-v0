@@ -1,7 +1,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-size: 16px;
+  --font-size: 14px;
   --background: #ffffff;
   --foreground: oklch(0.145 0 0);
   --card: #ffffff;
@@ -209,4 +209,14 @@ html {
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: oklch(0.439 0 0 / 0.5);
+}
+
+/* Ensure portal elements (like persistent chat bar) are always visible */
+body > [style*="z-index: 9999"] {
+  pointer-events: auto !important;
+}
+
+/* App shell should not clip fixed-position children */
+.app-shell {
+  isolation: isolate;
 }

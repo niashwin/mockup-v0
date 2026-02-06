@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'motion/react';
-import { 
-  ArrowLeft, 
-  Search, 
-  ZoomIn, 
-  ZoomOut, 
-  Maximize, 
-  Filter, 
-  MessageSquare, 
-  FileText, 
-  CheckCircle2, 
-  GitCommit, 
+import {
+  ArrowLeft,
+  Search,
+  ZoomIn,
+  ZoomOut,
+  Maximize,
+  Filter,
+  MessageSquare,
+  FileText,
+  CheckCircle2,
+  GitCommit,
   Users,
   Activity,
   Sparkles,
@@ -322,21 +322,21 @@ export const SwimlaneDetailScreen = ({ lane, timelineData, onBack }: SwimlaneDet
                 <button onClick={() => setZoom(1)} className="px-2 text-xs font-mono text-zinc-500">{Math.round(zoom * 100)}%</button>
                 <button onClick={() => handleZoom('in')} className="p-1.5 hover:bg-white dark:hover:bg-zinc-700 rounded-md text-zinc-500 transition-colors"><ZoomIn size={16} /></button>
              </div>
-             
+
              <button className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors">
                 <Filter size={18} />
              </button>
-             
+
              <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
-             
+
              <div className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5 border border-zinc-200 dark:border-zinc-700">
-                <button 
+                <button
                     onClick={() => setPanelMode('details')}
                     className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${panelMode === 'details' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
                 >
                     Details
                 </button>
-                <button 
+                <button
                     onClick={() => setPanelMode('comments')}
                     className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${panelMode === 'comments' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
                 >
@@ -389,132 +389,132 @@ export const SwimlaneDetailScreen = ({ lane, timelineData, onBack }: SwimlaneDet
 
       {/* 3. Timeline Canvas */}
       <div
-        ref={containerRef}
-        className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing bg-zinc-50 dark:bg-zinc-950"
-        onWheel={(e) => {
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                // Zoom with Ctrl/Cmd + wheel
-                handleZoom(e.deltaY > 0 ? 'out' : 'in');
-            } else {
-                e.preventDefault();
-                // Horizontal scroll with wheel (pan left/right)
-                setPanX(prev => {
-                    const delta = e.deltaY * 1.5; // Scroll speed
-                    const newPan = prev - delta;
-                    // More generous bounds for scrolling
-                    return Math.max(Math.min(newPan, dragBounds.right), dragBounds.left);
-                });
-            }
-        }}
-      >
-         {/* Timeline Axis */}
-         <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-zinc-300 dark:bg-zinc-700 z-10" />
+          ref={containerRef}
+          className="flex-1 relative overflow-hidden cursor-grab active:cursor-grabbing bg-zinc-50 dark:bg-zinc-950"
+          onWheel={(e) => {
+              if (e.ctrlKey || e.metaKey) {
+                  e.preventDefault();
+                  // Zoom with Ctrl/Cmd + wheel
+                  handleZoom(e.deltaY > 0 ? 'out' : 'in');
+              } else {
+                  e.preventDefault();
+                  // Horizontal scroll with wheel (pan left/right)
+                  setPanX(prev => {
+                      const delta = e.deltaY * 1.5; // Scroll speed
+                      const newPan = prev - delta;
+                      // More generous bounds for scrolling
+                      return Math.max(Math.min(newPan, dragBounds.right), dragBounds.left);
+                  });
+              }
+          }}
+        >
+           {/* Timeline Axis */}
+           <div className="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 h-0.5 bg-zinc-300 dark:bg-zinc-700 z-10" />
 
-         <motion.div 
-            className="absolute inset-0 flex items-center h-full"
-            drag="x"
-            dragConstraints={dragBounds}
-            onDrag={(e, info) => handlePan(info)}
-            style={{ x: panX, cursor: 'grab' }}
-            whileTap={{ cursor: 'grabbing' }}
-         >
-            {/* Connecting Lines between boxes */}
-            <svg className="absolute w-full h-full pointer-events-none" style={{ left: 0, top: 0 }}>
+           <motion.div
+              className="absolute inset-0 flex items-center h-full"
+              drag="x"
+              dragConstraints={dragBounds}
+              onDrag={(e, info) => handlePan(info)}
+              style={{ x: panX, cursor: 'grab' }}
+              whileTap={{ cursor: 'grabbing' }}
+           >
+              {/* Connecting Lines between boxes */}
+              <svg className="absolute w-full h-full pointer-events-none" style={{ left: 0, top: 0 }}>
+                {processedData.map((item, index) => {
+                  if (index === processedData.length - 1) return null;
+
+                  const spread = 200 * zoom;
+                  const startOffset = 100;
+                  const boxWidth = 200;
+
+                  const x1 = startOffset + index * spread + boxWidth;
+                  const x2 = startOffset + (index + 1) * spread;
+                  const y = '50%';
+
+                  return (
+                    <line
+                      key={`line-${item.id}`}
+                      x1={x1}
+                      y1={y}
+                      x2={x2}
+                      y2={y}
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeDasharray="4 4"
+                      className="text-zinc-300 dark:text-zinc-600 opacity-50"
+                    />
+                  );
+                })}
+              </svg>
+
+              {/* Events - Simple Box Layout */}
               {processedData.map((item, index) => {
-                if (index === processedData.length - 1) return null;
+                  const spread = 200 * zoom;
+                  const startOffset = 100;
+                  const xPos = startOffset + index * spread;
+                  const isSelected = selectedEventId === item.id;
 
-                const spread = 200 * zoom;
-                const startOffset = 100;
-                const boxWidth = 200;
+                  const getIcon = (type: string) => {
+                    switch(type) {
+                      case 'meeting': return Users;
+                      case 'decision': return GitCommit;
+                      case 'commitment': return CheckCircle2;
+                      case 'document': return FileText;
+                      default: return Activity;
+                    }
+                  };
 
-                const x1 = startOffset + index * spread + boxWidth;
-                const x2 = startOffset + (index + 1) * spread;
-                const y = '50%';
+                  const getBgColor = (type: string, criticality?: string) => {
+                    if (criticality === 'critical') return 'bg-red-500/10 border-red-500 hover:bg-red-500/20';
+                    if (criticality === 'urgent') return 'bg-orange-500/10 border-orange-500 hover:bg-orange-500/20';
 
-                return (
-                  <line
-                    key={`line-${item.id}`}
-                    x1={x1}
-                    y1={y}
-                    x2={x2}
-                    y2={y}
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                    className="text-zinc-300 dark:text-zinc-600 opacity-50"
-                  />
-                );
-              })}
-            </svg>
+                    switch(type) {
+                      case 'decision': return 'bg-emerald-500/10 border-emerald-500 hover:bg-emerald-500/20';
+                      case 'commitment': return 'bg-amber-500/10 border-amber-500 hover:bg-amber-500/20';
+                      case 'meeting': return 'bg-blue-500/10 border-blue-500 hover:bg-blue-500/20';
+                      default: return 'bg-zinc-500/10 border-zinc-500 hover:bg-zinc-500/20';
+                    }
+                  };
 
-            {/* Events - Simple Box Layout */}
-            {processedData.map((item, index) => {
-                const spread = 200 * zoom;
-                const startOffset = 100;
-                const xPos = startOffset + index * spread;
-                const isSelected = selectedEventId === item.id;
+                  const Icon = getIcon(item.type);
+                  const bgColor = getBgColor(item.type, item.criticality);
 
-                const getIcon = (type: string) => {
-                  switch(type) {
-                    case 'meeting': return Users;
-                    case 'decision': return GitCommit;
-                    case 'commitment': return CheckCircle2;
-                    case 'document': return FileText;
-                    default: return Activity;
-                  }
-                };
-
-                const getBgColor = (type: string, criticality?: string) => {
-                  if (criticality === 'critical') return 'bg-red-500/10 border-red-500 hover:bg-red-500/20';
-                  if (criticality === 'urgent') return 'bg-orange-500/10 border-orange-500 hover:bg-orange-500/20';
-
-                  switch(type) {
-                    case 'decision': return 'bg-emerald-500/10 border-emerald-500 hover:bg-emerald-500/20';
-                    case 'commitment': return 'bg-amber-500/10 border-amber-500 hover:bg-amber-500/20';
-                    case 'meeting': return 'bg-blue-500/10 border-blue-500 hover:bg-blue-500/20';
-                    default: return 'bg-zinc-500/10 border-zinc-500 hover:bg-zinc-500/20';
-                  }
-                };
-
-                const Icon = getIcon(item.type);
-                const bgColor = getBgColor(item.type, item.criticality);
-
-                return (
-                    <motion.div
-                      key={item.id}
-                      className="absolute top-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer"
-                      style={{ left: xPos }}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                      onClick={() => setSelectedEventId(item.id)}
-                    >
-                      <div className={`bg-white dark:bg-zinc-900 border-2 ${bgColor} rounded-xl p-5 shadow-lg min-w-[200px] max-w-[240px] transition-all ${isSelected ? 'ring-2 ring-emerald-500 scale-105' : ''} ${item.criticality === 'critical' ? 'animate-pulse' : ''}`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <div className={`w-5 h-5 rounded-full ${bgColor.split(' ')[0].replace('/10', '')} flex items-center justify-center`}>
-                            <Icon size={11} className="text-white" />
+                  return (
+                      <motion.div
+                        key={item.id}
+                        className="absolute top-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer"
+                        style={{ left: xPos }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        onClick={() => setSelectedEventId(item.id)}
+                      >
+                        <div className={`bg-white dark:bg-zinc-900 border-2 ${bgColor} rounded-xl p-5 shadow-lg min-w-[200px] max-w-[240px] transition-all ${isSelected ? 'ring-2 ring-emerald-500 scale-105' : ''} ${item.criticality === 'critical' ? 'animate-pulse' : ''}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className={`w-5 h-5 rounded-full ${bgColor.split(' ')[0].replace('/10', '')} flex items-center justify-center`}>
+                              <Icon size={11} className="text-white" />
+                            </div>
+                            <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-400">{item.type}</span>
                           </div>
-                          <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-400">{item.type}</span>
-                        </div>
 
-                        <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-xs mb-2 line-clamp-2">
-                          {item.title}
-                        </div>
+                          <div className="font-semibold text-zinc-900 dark:text-zinc-100 text-xs mb-2 line-clamp-2">
+                            {item.title}
+                          </div>
 
-                        <div className="text-[9px] text-zinc-400 font-mono">
-                          {item.timestamp}
+                          <div className="text-[9px] text-zinc-400 font-mono">
+                            {item.timestamp}
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                );
-            })}
-         </motion.div>
+                      </motion.div>
+                  );
+              })}
+           </motion.div>
 
-         {/* Gradient fade on sides */}
-         <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-zinc-50/50 dark:from-zinc-950/50 to-transparent pointer-events-none z-30" />
-         <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-zinc-50/50 dark:from-zinc-950/50 to-transparent pointer-events-none z-30" />
-      </div>
+           {/* Gradient fade on sides */}
+           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-zinc-50/50 dark:from-zinc-950/50 to-transparent pointer-events-none z-30" />
+           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-zinc-50/50 dark:from-zinc-950/50 to-transparent pointer-events-none z-30" />
+        </div>
 
       {/* 3. Bottom Panel (Fixed) */}
       <motion.div 

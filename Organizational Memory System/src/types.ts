@@ -25,6 +25,9 @@ export interface AttentionMetadata {
   probability: Probability;
   impact: Impact;
   memoryRationale: string;  // Why this surfaced - explains context, not commands
+  impactNarrative?: string; // Human-readable impact description (blocks downstream work, etc.)
+  isNew?: boolean;          // Item appeared since last visit
+  isEscalated?: boolean;    // Item urgency increased since last visit
   needsIntervention: boolean;
   needsDecision: boolean;
   collaborators?: string[];

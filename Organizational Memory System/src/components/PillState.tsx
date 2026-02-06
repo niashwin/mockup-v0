@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, X, Trash2, Lock, Check, PencilLine, Link } from 'lucide-react';
-import sentraLogo from 'figma:asset/2d867a3a115cb7771d8ca0fe7bf3c137b72785fa.png';
+import sentraLogo from '../assets/2d867a3a115cb7771d8ca0fe7bf3c137b72785fa.png';
 import { ViewMode } from '../types';
 
 export const PillState = ({ 

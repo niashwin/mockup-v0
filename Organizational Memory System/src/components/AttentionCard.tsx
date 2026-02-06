@@ -4,23 +4,18 @@ import {
   AlertTriangle,
   CheckCircle2,
   Calendar,
-  MoreHorizontal,
   Clock,
   Zap,
   Target,
   UserCircle,
   Send,
   ArrowRight,
-  MessageSquare,
   Eye,
-  UserPlus,
-  CheckCheck,
-  Mail,
-  Video,
-  AlertCircle
+  AlertCircle,
+  TrendingUp,
+  Bell
 } from 'lucide-react';
 import { AttentionItem, AttentionType } from '../types';
-import { getRelativeTime } from '../utils/AttentionScore';
 
 // Category styling and icons
 const CATEGORY_CONFIG: Record<AttentionType, {
@@ -89,124 +84,89 @@ const CATEGORY_CONFIG: Record<AttentionType, {
   }
 };
 
-// Get suggested action text based on item type - avoid redundancy with category badge
-function getSuggestedAction(item: AttentionItem): { text: string; icon: React.ElementType } {
+// Get surfacing reason - WHY this appeared NOW (Principle 2: explicit ranking rationale)
+function getSurfacingReason(item: AttentionItem): { text: string; isNew: boolean; isEscalated: boolean } {
+  const type = item.attentionType || item.itemType;
+
+  // Check for recent changes (Principle 4 & 8: emphasize change, "what changed" cue)
+  const isNew = item.isNew || false;
+  const isEscalated = item.isEscalated || false;
+
+  if (isEscalated) {
+    return { text: 'Escalated today', isNew: false, isEscalated: true };
+  }
+  if (isNew) {
+    return { text: 'New', isNew: true, isEscalated: false };
+  }
+
+  switch (type) {
+    case 'risk':
+    case 'alert':
+      return { text: 'New signal detected', isNew: false, isEscalated: false };
+    case 'misalignment':
+      return { text: 'Pattern detected across sources', isNew: false, isEscalated: false };
+    case 'blocker':
+      return { text: 'Downstream dependency waiting', isNew: false, isEscalated: false };
+    case 'commitment':
+      if (item.itemType === 'commitment' && item.status === 'overdue') {
+        return { text: 'Deadline crossed', isNew: false, isEscalated: true };
+      }
+      return { text: 'Deadline approaching', isNew: false, isEscalated: false };
+    case 'meeting':
+      return { text: 'Starting soon', isNew: false, isEscalated: false };
+    case 'relationship':
+      return { text: 'Contact gap growing', isNew: false, isEscalated: false };
+    case 'followup':
+      return { text: 'Response window closing', isNew: false, isEscalated: false };
+    default:
+      return { text: 'Surfaced now', isNew: false, isEscalated: false };
+  }
+}
+
+// Get impact narrative - WHY this matters (Principle 5 & 6: narrative over math, why before what)
+function getImpactNarrative(item: AttentionItem): string {
+  // If item has a custom impact narrative, use it
+  if (item.impactNarrative) return item.impactNarrative;
+  if (item.memoryRationale) return item.memoryRationale;
+
   const type = item.attentionType || item.itemType;
 
   switch (type) {
     case 'risk':
     case 'alert':
-      return { text: 'Review and acknowledge', icon: Eye };
+      return item.itemType === 'alert' ? item.description : 'May require immediate attention to prevent escalation.';
     case 'misalignment':
-      return { text: 'Schedule alignment sync', icon: MessageSquare };
+      return 'Creates conflicting decisions if not addressed.';
     case 'blocker':
-      return { text: 'Resolve or escalate', icon: Zap };
+      return 'Blocks downstream work until resolved.';
     case 'commitment':
-      if (item.itemType === 'commitment' && item.status === 'overdue') {
-        return { text: 'Overdue - take action', icon: AlertCircle };
-      }
-      return { text: 'Action required', icon: CheckCheck };
+      return item.itemType === 'commitment' && item.context
+        ? item.context
+        : 'Affects trust and planning accuracy.';
     case 'meeting':
-      return { text: 'Prepare and join', icon: Video };
+      return item.itemType === 'meeting' ? item.summary : 'Coordination opportunity.';
     case 'relationship':
-      return { text: 'Reach out', icon: Mail };
+      return 'Relationship momentum may be declining.';
     case 'followup':
-      return { text: 'Send follow-up', icon: Send };
+      return 'Response window affects relationship trajectory.';
     default:
-      return { text: 'Take action', icon: ArrowRight };
+      return '';
   }
 }
 
-// Get urgency display
-function getUrgencyDisplay(item: AttentionItem): { text: string; isUrgent: boolean; color: string } {
-  let deadline = '';
-  let isUrgent = false;
-
+// Get time context (WHEN)
+function getTimeContext(item: AttentionItem): string {
   switch (item.itemType) {
     case 'commitment':
-      deadline = item.dueDate || '';
-      isUrgent = item.status === 'overdue' || deadline.toLowerCase().includes('today') || deadline.toLowerCase().includes('overdue');
-      break;
+      return item.dueDate || '';
     case 'meeting':
-      deadline = item.time || '';
-      isUrgent = deadline.toLowerCase().includes('in ') || deadline.toLowerCase().includes('now');
-      break;
+      return item.time || '';
     case 'alert':
-      const time = getRelativeTime(item.timestamp);
-      deadline = time;
-      isUrgent = item.severity === 'critical';
-      break;
+      return '';
     case 'relationship':
-      deadline = `${item.daysSinceContact} days since contact`;
-      isUrgent = item.daysSinceContact > 30;
-      break;
-  }
-
-  const color = isUrgent ? 'text-red-600 dark:text-red-400' : 'text-zinc-500 dark:text-zinc-400';
-
-  return { text: deadline, isUrgent, color };
-}
-
-// Get contextual choices based on item type
-function getContextualChoices(item: AttentionItem): Array<{ id: string; label: string; icon: React.ElementType; primary?: boolean }> {
-  const type = item.attentionType || item.itemType;
-
-  switch (type) {
-    case 'risk':
-    case 'alert':
-      return [
-        { id: 'acknowledge', label: 'Acknowledge', icon: CheckCheck, primary: true },
-        { id: 'view-source', label: 'See Details', icon: Eye },
-        { id: 'escalate', label: 'Escalate', icon: UserPlus }
-      ];
-    case 'misalignment':
-      return [
-        { id: 'schedule-sync', label: 'Schedule Sync', icon: Calendar, primary: true },
-        { id: 'view-context', label: 'See Context', icon: Eye },
-        { id: 'comment', label: 'Add Note', icon: MessageSquare }
-      ];
-    case 'blocker':
-      return [
-        { id: 'resolve', label: 'Mark Resolved', icon: CheckCheck, primary: true },
-        { id: 'escalate', label: 'Escalate', icon: UserPlus },
-        { id: 'snooze', label: 'Snooze', icon: Clock }
-      ];
-    case 'commitment':
-      if (item.itemType === 'commitment' && item.status === 'overdue') {
-        return [
-          { id: 'mark-done', label: 'Mark Done', icon: CheckCheck, primary: true },
-          { id: 'reschedule', label: 'Reschedule', icon: Calendar },
-          { id: 'delegate', label: 'Delegate', icon: UserPlus }
-        ];
-      }
-      return [
-        { id: 'mark-done', label: 'Mark Done', icon: CheckCheck, primary: true },
-        { id: 'view-source', label: 'See Context', icon: Eye },
-        { id: 'snooze', label: 'Snooze', icon: Clock }
-      ];
-    case 'meeting':
-      return [
-        { id: 'join-meeting', label: 'Join Now', icon: Video, primary: true },
-        { id: 'view-brief', label: 'View Brief', icon: Eye },
-        { id: 'reschedule', label: 'Reschedule', icon: Calendar }
-      ];
-    case 'relationship':
-      return [
-        { id: 'send-email', label: 'Send Email', icon: Mail, primary: true },
-        { id: 'schedule-call', label: 'Schedule Call', icon: Calendar },
-        { id: 'view-history', label: 'View History', icon: Eye }
-      ];
-    case 'followup':
-      return [
-        { id: 'send-followup', label: 'Send Follow-up', icon: Send, primary: true },
-        { id: 'view-thread', label: 'See Thread', icon: Eye },
-        { id: 'snooze', label: 'Snooze', icon: Clock }
-      ];
+      return `${item.daysSinceContact} days`;
     default:
-      return [
-        { id: 'view-details', label: 'View Details', icon: Eye, primary: true },
-        { id: 'snooze', label: 'Snooze', icon: Clock }
-      ];
+      return '';
   }
 }
 
@@ -235,29 +195,12 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
 
   const config = CATEGORY_CONFIG[attentionType];
   const CategoryIcon = config.icon;
-  const urgency = getUrgencyDisplay(item);
-  const choices = getContextualChoices(item);
+  const surfacingReason = getSurfacingReason(item);
+  const impactNarrative = getImpactNarrative(item);
+  const timeContext = getTimeContext(item);
 
-  // Get title
+  // Get title - reframed as observation about the world (Principle 1 & 9)
   const getTitle = (): string => item.title;
-
-  // Get the WHY - memory rationale or context
-  const getWhy = (): string => {
-    if (item.memoryRationale) return item.memoryRationale;
-
-    switch (item.itemType) {
-      case 'alert':
-        return item.description;
-      case 'commitment':
-        return item.context || '';
-      case 'meeting':
-        return item.summary;
-      case 'relationship':
-        return item.description;
-      default:
-        return '';
-    }
-  };
 
   // Compact mode
   if (isCompact) {
@@ -275,8 +218,11 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
           <div className={`w-1 h-8 rounded-full ${config.accentColor}`} />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{getTitle()}</p>
-            <p className={`text-xs ${urgency.color} mt-0.5`}>{urgency.text}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{surfacingReason.text}</p>
           </div>
+          {(surfacingReason.isNew || surfacingReason.isEscalated) && (
+            <div className={`w-2 h-2 rounded-full ${surfacingReason.isEscalated ? 'bg-red-500' : 'bg-blue-500'}`} />
+          )}
           <ArrowRight size={14} className="text-zinc-400 group-hover:text-zinc-600 transition-colors" />
         </div>
       </motion.div>
@@ -298,84 +244,74 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
       <div className={`h-1 ${config.accentColor}`} />
 
       <div className="p-5">
-        {/* Header: Category badge + Urgency */}
-        <div className="flex items-center justify-between mb-4">
-          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${config.bgColor} ${config.textColor}`}>
-            <CategoryIcon size={12} strokeWidth={2.5} />
-            <span className="text-[10px] font-bold tracking-wider">{config.label}</span>
+        {/* Header: Category + Surfacing reason + "What changed" indicator */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${config.bgColor} ${config.textColor}`}>
+              <CategoryIcon size={12} strokeWidth={2.5} />
+              <span className="text-[10px] font-bold tracking-wider">{config.label}</span>
+            </div>
+
+            {/* Surfacing reason - WHY NOW (Principle 2) */}
+            <div className={`flex items-center gap-1 text-[11px] ${
+              surfacingReason.isEscalated
+                ? 'text-red-600 dark:text-red-400 font-medium'
+                : surfacingReason.isNew
+                  ? 'text-blue-600 dark:text-blue-400 font-medium'
+                  : 'text-zinc-500 dark:text-zinc-400'
+            }`}>
+              {surfacingReason.isEscalated && <TrendingUp size={10} />}
+              {surfacingReason.isNew && <Bell size={10} />}
+              <span>{surfacingReason.text}</span>
+            </div>
           </div>
 
-          {/* WHEN: Urgency/Deadline */}
-          <div className={`flex items-center gap-1.5 ${urgency.color}`}>
-            <Clock size={12} />
-            <span className={`text-xs font-medium ${urgency.isUrgent ? 'font-semibold' : ''}`}>
-              {urgency.text}
-            </span>
-          </div>
+          {/* Time context - WHEN */}
+          {timeContext && (
+            <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
+              <Clock size={12} />
+              <span className="text-xs">{timeContext}</span>
+            </div>
+          )}
         </div>
 
-        {/* WHAT: The title - what needs to be done */}
+        {/* WHAT: Observation about the world (Principle 1) */}
         <div
           onClick={() => onExpand(item)}
-          className="mb-4 cursor-pointer"
+          className="mb-3 cursor-pointer"
         >
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {getTitle()}
           </h3>
         </div>
 
-        {/* WHY: Memory rationale */}
-        <div className="mb-5 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
-          <div className="flex items-start gap-2">
-            <AlertCircle size={14} className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed line-clamp-3">
-                {getWhy()}
-              </p>
-              {item.evidence && item.evidence.length > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onShowEvidence?.(item);
-                  }}
-                  className="mt-2 text-[10px] font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors flex items-center gap-1"
-                >
-                  <Eye size={10} />
-                  View {item.evidence.length} source{item.evidence.length > 1 ? 's' : ''}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Contextual Choices */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {choices.map((choice, idx) => (
+        {/* WHY THIS MATTERS: Impact narrative (Principle 5 & 6) */}
+        <div className="mb-4">
+          <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+            {impactNarrative}
+          </p>
+          {item.evidence && item.evidence.length > 0 && (
             <button
-              key={choice.id}
               onClick={(e) => {
                 e.stopPropagation();
-                onAction(choice.id, item);
+                onShowEvidence?.(item);
               }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                choice.primary
-                  ? `${config.bgColor} ${config.textColor} border ${config.borderColor} hover:shadow-md`
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-              }`}
+              className="mt-2 text-[11px] font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors flex items-center gap-1"
             >
-              <choice.icon size={12} />
-              {choice.label}
+              <Eye size={10} />
+              {item.evidence.length} source{item.evidence.length > 1 ? 's' : ''}
             </button>
-          ))}
-
-          {/* More options */}
-          <button
-            onClick={(e) => { e.stopPropagation(); }}
-            className="ml-auto w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors opacity-0 group-hover:opacity-100"
-          >
-            <MoreHorizontal size={14} />
-          </button>
+          )}
         </div>
+
+        {/* Single primary action - orientation, not execution (Principle 7 & 10) */}
+        <button
+          onClick={() => onExpand(item)}
+          className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${config.bgColor} ${config.textColor} border ${config.borderColor} hover:shadow-md`}
+        >
+          <Eye size={14} />
+          See details
+        </button>
       </div>
     </motion.div>
   );
