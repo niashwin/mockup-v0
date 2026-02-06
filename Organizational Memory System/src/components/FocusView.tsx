@@ -564,28 +564,6 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
                         )}
                       </div>
                     )}
-
-                    {/* Add to calendar button */}
-                    <button
-                      onClick={() => {
-                        // In a real app, this would call calendar API
-                        console.log('Adding to calendar:', addedInvitees);
-                        setIsAddingPeople(false);
-                        setAddedInvitees([]);
-                        setSearchQuery('');
-                      }}
-                      disabled={addedInvitees.length === 0}
-                      className={`w-full py-2.5 rounded-lg text-xs font-medium transition-colors ${
-                        addedInvitees.length > 0
-                          ? 'bg-violet-600 hover:bg-violet-700 text-white'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed'
-                      }`}
-                    >
-                      {addedInvitees.length > 0
-                        ? `Add ${addedInvitees.length} ${addedInvitees.length === 1 ? 'person' : 'people'} to calendar`
-                        : 'Search for people to add'
-                      }
-                    </button>
                   </div>
                 </motion.div>
               )}
@@ -743,40 +721,76 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
             <div className="flex items-center justify-end gap-2">
               {item.itemType === 'meeting' ? (
                 <>
-                  {/* Add People - for meetings (adds to calendar invite) */}
-                  <button
-                    onClick={() => {
-                      setIsAddingPeople(!isAddingPeople);
-                      if (isAddingPeople) {
-                        setSearchQuery('');
-                        setAddedInvitees([]);
-                      }
-                    }}
-                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors ${
-                      isAddingPeople ? 'ring-2 ring-violet-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
-                    }`}
-                  >
-                    <UserPlus size={12} />
-                    {isAddingPeople ? 'Cancel' : 'Add People'}
-                  </button>
+                  {isAddingPeople && addedInvitees.length > 0 ? (
+                    <>
+                      {/* Cancel - when invitees are ready to send */}
+                      <button
+                        onClick={() => {
+                          setIsAddingPeople(false);
+                          setSearchQuery('');
+                          setAddedInvitees([]);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                      >
+                        <X size={12} />
+                        Cancel
+                      </button>
 
-                  {/* Join Now - primary action for meetings */}
-                  <button
-                    onClick={() => onAction('join-meeting', item)}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                  >
-                    <Video size={12} />
-                    Join Now
-                  </button>
+                      {/* Send - adds invitees to People Involved */}
+                      <button
+                        onClick={() => {
+                          // In a real app, this would call calendar API to send invites
+                          // and update the item's collaborators list
+                          console.log('Sending calendar invites to:', addedInvitees);
+                          onAction('send-calendar-invite', item);
+                          setIsAddingPeople(false);
+                          setSearchQuery('');
+                          setAddedInvitees([]);
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
+                      >
+                        <Send size={12} />
+                        Send
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Add People - for meetings (adds to calendar invite) */}
+                      <button
+                        onClick={() => {
+                          setIsAddingPeople(!isAddingPeople);
+                          if (isAddingPeople) {
+                            setSearchQuery('');
+                            setAddedInvitees([]);
+                          }
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/40 transition-colors ${
+                          isAddingPeople ? 'ring-2 ring-violet-500 ring-offset-2 dark:ring-offset-zinc-900' : ''
+                        }`}
+                      >
+                        <UserPlus size={12} />
+                        {isAddingPeople ? 'Cancel' : 'Add People'}
+                      </button>
 
-                  {/* Reschedule */}
-                  <button
-                    onClick={() => onAction('reschedule', item)}
-                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-                  >
-                    <Calendar size={12} />
-                    Reschedule
-                  </button>
+                      {/* Join Now - primary action for meetings */}
+                      <button
+                        onClick={() => onAction('join-meeting', item)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                      >
+                        <Video size={12} />
+                        Join Now
+                      </button>
+
+                      {/* Reschedule */}
+                      <button
+                        onClick={() => onAction('reschedule', item)}
+                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                      >
+                        <Calendar size={12} />
+                        Reschedule
+                      </button>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
