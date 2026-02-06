@@ -235,9 +235,6 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
 
   const config = CATEGORY_CONFIG[attentionType];
   const CategoryIcon = config.icon;
-
-  const suggestedAction = getSuggestedAction(item);
-  const SuggestedIcon = suggestedAction.icon;
   const urgency = getUrgencyDisplay(item);
   const choices = getContextualChoices(item);
 
@@ -317,15 +314,11 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
           </div>
         </div>
 
-        {/* WHAT: Suggested Action - narrative style */}
+        {/* WHAT: The title - what needs to be done */}
         <div
           onClick={() => onExpand(item)}
           className="mb-4 cursor-pointer"
         >
-          <div className="flex items-center gap-2 mb-2">
-            <SuggestedIcon size={14} className={config.textColor} />
-            <span className={`text-xs font-medium ${config.textColor}`}>{suggestedAction.text}</span>
-          </div>
           <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 leading-snug hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {getTitle()}
           </h3>
