@@ -786,10 +786,10 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction })
                           setSearchQuery('');
                           setAddedInvitees([]);
                         }}
-                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors shadow-sm"
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-white hover:bg-zinc-50 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-600 rounded-lg transition-colors shadow-sm"
                       >
                         <Send size={14} />
-                        Send Invite
+                        Send
                       </button>
                     </>
                   ) : (
