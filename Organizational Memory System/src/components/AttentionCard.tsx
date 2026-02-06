@@ -89,7 +89,7 @@ const CATEGORY_CONFIG: Record<AttentionType, {
   }
 };
 
-// Get suggested action text based on item type
+// Get suggested action text based on item type - avoid redundancy with category badge
 function getSuggestedAction(item: AttentionItem): { text: string; icon: React.ElementType } {
   const type = item.attentionType || item.itemType;
 
@@ -98,20 +98,20 @@ function getSuggestedAction(item: AttentionItem): { text: string; icon: React.El
     case 'alert':
       return { text: 'Review and acknowledge', icon: Eye };
     case 'misalignment':
-      return { text: 'Align with stakeholders', icon: MessageSquare };
+      return { text: 'Schedule alignment sync', icon: MessageSquare };
     case 'blocker':
-      return { text: 'Unblock or escalate', icon: Zap };
+      return { text: 'Resolve or escalate', icon: Zap };
     case 'commitment':
       if (item.itemType === 'commitment' && item.status === 'overdue') {
-        return { text: 'Complete or reschedule', icon: AlertCircle };
+        return { text: 'Overdue - take action', icon: AlertCircle };
       }
-      return { text: 'Complete this commitment', icon: CheckCheck };
+      return { text: 'Action required', icon: CheckCheck };
     case 'meeting':
       return { text: 'Prepare and join', icon: Video };
     case 'relationship':
-      return { text: 'Reconnect with them', icon: Mail };
+      return { text: 'Reach out', icon: Mail };
     case 'followup':
-      return { text: 'Follow up now', icon: Send };
+      return { text: 'Send follow-up', icon: Send };
     default:
       return { text: 'Take action', icon: ArrowRight };
   }
@@ -334,9 +334,9 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
         {/* WHY: Memory rationale */}
         <div className="mb-5 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800">
           <div className="flex items-start gap-2">
-            <AlertCircle size={14} className="text-zinc-400 mt-0.5 shrink-0" />
+            <AlertCircle size={14} className="text-zinc-500 dark:text-zinc-400 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3">
+              <p className="text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed line-clamp-3">
                 {getWhy()}
               </p>
               {item.evidence && item.evidence.length > 0 && (
@@ -345,7 +345,7 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
                     e.stopPropagation();
                     onShowEvidence?.(item);
                   }}
-                  className="mt-2 text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors flex items-center gap-1"
+                  className="mt-2 text-[10px] font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors flex items-center gap-1"
                 >
                   <Eye size={10} />
                   View {item.evidence.length} source{item.evidence.length > 1 ? 's' : ''}
