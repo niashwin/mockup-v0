@@ -32,6 +32,7 @@ import {
 import { AttentionItem, AttentionType, EvidenceItem, CollaborationComment } from '../types';
 import { getRelativeTime } from '../utils/AttentionScore';
 import { CollaborationThread } from './CollaborationThread';
+import { EmailCompose } from './EmailCompose';
 
 // Get contextual intervention actions based on item type
 // Item 5: Replace "completion" semantics with "intervention" semantics
@@ -198,6 +199,9 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction, o
   const [isCollaborating, setIsCollaborating] = useState(false);
   const [selectedCollaborators, setSelectedCollaborators] = useState<string[]>([]);
   const [threadStarted, setThreadStarted] = useState(false);
+
+  // Email compose modal state
+  const [isEmailComposeOpen, setIsEmailComposeOpen] = useState(false);
 
   // Meeting-specific state for adding people to calendar
   const [isAddingPeople, setIsAddingPeople] = useState(false);
@@ -433,19 +437,13 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction, o
               </>
             ) : (
               <>
-                {/* Item 2: Origin - WHERE this came from (one sentence max) */}
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Origin</h2>
+                {/* Context: Origin + Why now - flowing naturally as paragraphs */}
+                <div className="space-y-3">
                   <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
                     {item.memory?.origin?.description || getContext()}
                   </p>
-                </div>
-
-                {/* Item 2: Trigger - WHY it surfaced NOW (one sentence max) */}
-                <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Trigger</h2>
                   <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                    {item.memory?.trigger?.description || item.memoryRationale || 'Conditions changed requiring attention.'}
+                    {item.memory?.trigger?.description || item.memoryRationale || ''}
                   </p>
                 </div>
 
@@ -941,10 +939,17 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction, o
                   {/* Item 5: Intervention actions (not completion actions) */}
                   {interventionActions.map((action) => {
                     const ActionIcon = action.icon;
+                    const isEmailAction = action.id === 'send-email' || action.id === 'send-followup';
                     return (
                       <button
                         key={action.id}
-                        onClick={() => onAction(action.id, item)}
+                        onClick={() => {
+                          if (isEmailAction) {
+                            setIsEmailComposeOpen(true);
+                          } else {
+                            onAction(action.id, item);
+                          }
+                        }}
                         className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors ${
                           action.primary
                             ? 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -971,6 +976,13 @@ export const FocusView: React.FC<FocusViewProps> = ({ item, onClose, onAction, o
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Email Compose Modal */}
+      <EmailCompose
+        isOpen={isEmailComposeOpen}
+        onClose={() => setIsEmailComposeOpen(false)}
+        item={item}
+      />
     </AnimatePresence>
   );
 };

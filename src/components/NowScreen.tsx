@@ -6,6 +6,8 @@ import { ChatInterface } from './ChatInterface';
 import { FocusView } from './FocusView';
 import { SourceDrawer } from './SourceDrawer';
 import { AttentionCard } from './AttentionCard';
+import { EmailCompose } from './EmailCompose';
+import { SchedulingActionSheet } from './SchedulingActionSheet';
 import { toast } from 'sonner';
 import { getOperatorQuote, getCelebratoryQuote, shouldCelebrate, getContextualQuote, getTimeOfDay } from '../utils/OperatorQuotes';
 import { sortByAttentionScore, filterForAttentionPane } from '../utils/AttentionScore';
@@ -138,6 +140,14 @@ export const NowScreen = ({
   const [completedToday, setCompletedToday] = useState(0);
   const [meetingDismissed, setMeetingDismissed] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Email compose modal state (for quick actions)
+  const [emailComposeItem, setEmailComposeItem] = useState<AttentionItem | null>(null);
+  const [isEmailComposeOpen, setIsEmailComposeOpen] = useState(false);
+
+  // Scheduling sheet state
+  const [schedulingItem, setSchedulingItem] = useState<AttentionItem | null>(null);
+  const [isSchedulingOpen, setIsSchedulingOpen] = useState(false);
 
   // Snoozed items: Map of item ID -> timestamp when it should reappear
   const [snoozedItems, setSnoozedItems] = useState<Map<string, number>>(new Map());
@@ -500,6 +510,21 @@ export const NowScreen = ({
     setEvidenceItem(item);
   };
 
+  // Quick action handler - opens prepared intervention flow (email compose, etc.)
+  // Quick actions are low-risk, obvious, supportive - never finalize decisions
+  const handleQuickAction = (actionId: string, item: AttentionItem) => {
+    // All quick actions currently open the email compose with context
+    // This provides a prepared, editable intervention - user must still click Send
+    setEmailComposeItem(item);
+    setIsEmailComposeOpen(true);
+  };
+
+  // Schedule action handler - opens the scheduling flow sheet
+  const handleSchedule = (item: AttentionItem) => {
+    setSchedulingItem(item);
+    setIsSchedulingOpen(true);
+  };
+
   const handleJoinMeeting = () => {
     if (nextMeeting?.meetingLink) {
       window.open(nextMeeting.meetingLink, '_blank');
@@ -587,6 +612,8 @@ export const NowScreen = ({
                       onAction={handleAction}
                       onExpand={handleExpand}
                       onShowEvidence={handleShowEvidence}
+                      onQuickAction={handleQuickAction}
+                      onSchedule={handleSchedule}
                     />
                   </motion.div>
                 ))}
@@ -658,6 +685,26 @@ export const NowScreen = ({
       <ChatInterface
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
+      />
+
+      {/* Email Compose Modal - for quick actions */}
+      <EmailCompose
+        isOpen={isEmailComposeOpen}
+        onClose={() => {
+          setIsEmailComposeOpen(false);
+          setEmailComposeItem(null);
+        }}
+        item={emailComposeItem}
+      />
+
+      {/* Scheduling Action Sheet */}
+      <SchedulingActionSheet
+        open={isSchedulingOpen}
+        onClose={() => {
+          setIsSchedulingOpen(false);
+          setSchedulingItem(null);
+        }}
+        item={schedulingItem}
       />
     </div>
   );

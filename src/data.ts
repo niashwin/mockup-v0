@@ -1443,7 +1443,7 @@ export const alerts: Alert[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'friction',
-    memoryRationale: 'High probability (3 meetings, no resolution) × High impact (Q3 launch in 12 days). Escalation likely needed.',
+    memoryRationale: 'Marketing and Product have been going in circles on this for two weeks. Worth escalating before the launch slips.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['Jordan (Marketing)', 'Sarah (Product)'],
@@ -1451,6 +1451,26 @@ export const alerts: Alert[] = [
       { type: 'Slack', url: '#strategy', preview: 'Jordan: "We need to finalize KPIs this week"' },
       { type: 'Meeting', url: 'm-past-10', preview: 'Product Roadmap Sync - alignment discussed' }
     ],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-20T10:00:00',
+      activeDays: 14,
+      hasAppearedBefore: true,
+      previousAppearances: 2,
+      origin: {
+        type: 'meeting',
+        description: 'Jordan first raised the KPI concern in the Jan 20 Product Roadmap Sync. Sarah agreed alignment was needed, but three subsequent meetings (Jan 24, Jan 28, Feb 1) haven\'t resolved it. Each meeting ended with "let\'s take it offline" but no one followed through.'
+      },
+      trigger: {
+        type: 'deadline',
+        description: 'The Q3 launch is now 12 days away. Jordan posted in #strategy this morning at 9:15 AM suggesting it\'s time to escalate to the exec sync. Without resolution this week, the launch timeline is at risk.'
+      },
+      storyline: {
+        isPartOfThread: true,
+        threadDescription: 'Part of Q3 Launch Planning'
+      },
+      rankingRationale: 'Two weeks without resolution, launch in 12 days'
+    },
     thread: {
       comments: [
         {
@@ -1492,14 +1512,29 @@ export const alerts: Alert[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'friction',
-    memoryRationale: 'High probability (15% over, trending up) × High impact ($17K overage requires CFO approval). Budget action needed this week.',
+    memoryRationale: 'The $17K overage will require CFO approval if we don\'t act this week. Finance is asking for a plan.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['Finance', 'Platform Team'],
     evidence: [
       { type: 'PDF', url: 'finance-report', preview: 'AWS spend: $127K (budget: $110K)' },
       { type: 'Datadog', url: 'cost-dashboard', preview: 'Cost trending 15% over' }
-    ]
+    ],
+    memory: {
+      lifecycleState: 'entered',
+      enteredAt: '2026-02-01T14:15:00',
+      activeDays: 1,
+      hasAppearedBefore: false,
+      origin: {
+        type: 'document',
+        description: 'Finance flagged this in yesterday\'s weekly update (PDF attached). The overage started in mid-January when the new ML pipeline went live. Platform Team confirmed they weren\'t aware of the cost impact during rollout.'
+      },
+      trigger: {
+        type: 'pattern_detected',
+        description: 'Spend has increased 15% month-over-month and is still climbing. At current trajectory, February will exceed budget by $20K+. Finance policy requires CFO sign-off for overages above $15K.'
+      },
+      rankingRationale: 'CFO approval threshold about to be crossed'
+    }
   },
   {
     id: 'a3',
@@ -1512,12 +1547,27 @@ export const alerts: Alert[] = [
     probability: 'medium',
     impact: 'medium',
     focusCategory: 'pulse',
-    memoryRationale: 'This surfaced because the feature directly overlaps with items on your Q2 roadmap. Market response may inform positioning.',
+    memoryRationale: 'Their feature overlaps with your Q2 sync improvements. Early reception might inform your positioning.',
     needsIntervention: false,
     needsDecision: false,
     evidence: [
       { type: 'Web', url: 'competitor-launch', preview: 'Product Hunt: "Smart Sync launches..."' }
-    ]
+    ],
+    memory: {
+      lifecycleState: 'entered',
+      enteredAt: '2026-02-02T08:00:00',
+      activeDays: 0,
+      hasAppearedBefore: false,
+      origin: {
+        type: 'signal',
+        description: 'Market Intelligence picked up the launch from Product Hunt at 8:00 AM. Competitor X has been teasing this feature on Twitter for two weeks.'
+      },
+      trigger: {
+        type: 'external_signal',
+        description: 'The feature launched this morning and directly overlaps with your "Enhanced Sync" item on the Q2 roadmap (scheduled for April). Product Hunt comments are mixed—users are complaining about complexity. This could be an opportunity to differentiate on simplicity.'
+      },
+      rankingRationale: 'New competitive signal, overlaps Q2 roadmap'
+    }
   },
   {
     id: 'a4',
@@ -1530,13 +1580,29 @@ export const alerts: Alert[] = [
     probability: 'high',
     impact: 'medium',
     focusCategory: 'horizon',
-    memoryRationale: 'This surfaced because the Feb 15 deadline is approaching and three reviews are still pending. Completing them this week keeps the renewal on track.',
+    memoryRationale: 'The Feb 15 deadline is 13 days away and three reviews are still pending. Security hit capacity constraints.',
     needsIntervention: true,
     needsDecision: false,
     collaborators: ['Security', 'IT Ops'],
     evidence: [
       { type: 'Notion', url: 'soc2-checklist', preview: '3/6 access reviews pending' }
-    ]
+    ],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-25T10:00:00',
+      activeDays: 9,
+      hasAppearedBefore: true,
+      previousAppearances: 1,
+      origin: {
+        type: 'document',
+        description: 'Security started the SOC 2 renewal checklist on Jan 15. They completed three reviews by Jan 25, but David mentioned in #security that the team got pulled into the Feb 1 incident response.'
+      },
+      trigger: {
+        type: 'deadline',
+        description: 'The Feb 15 auditor deadline is now 13 days away. The three remaining reviews (Database Access, Admin Privileges, Third-Party Integrations) each require 2-3 days. Security is asking if they can borrow IT Ops capacity to parallelize.'
+      },
+      rankingRationale: 'Deadline approaching, team capacity constrained'
+    }
   },
   {
     id: 'a5',
@@ -1549,7 +1615,7 @@ export const alerts: Alert[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'friction',
-    memoryRationale: 'High probability (CTO escalation, 3 weeks unresolved) × High impact ($450K ARR, renewal in 45 days). Immediate response required.',
+    memoryRationale: 'Their CTO escalated this morning. Lumen is a $450K account renewing in 45 days—we need to respond today.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['Customer Success', 'Engineering'],
@@ -1557,6 +1623,22 @@ export const alerts: Alert[] = [
       { type: 'Zendesk', url: 'ticket-4521', preview: 'Lumen: "Audit exports missing since Jan 28"' },
       { type: 'Slack', url: '#customer-success', preview: 'CS: "Lumen escalation - needs immediate attention"' }
     ],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-28T09:00:00',
+      activeDays: 6,
+      hasAppearedBefore: true,
+      previousAppearances: 3,
+      origin: {
+        type: 'signal',
+        description: 'Lumen opened Zendesk ticket #4521 on Jan 28 reporting missing audit exports. The issue was initially categorized as "low priority" but escalated when their compliance team flagged it. Engineering traced it to a migration script gap from the Jan 15 database update.'
+      },
+      trigger: {
+        type: 'escalation',
+        description: 'Lumen\'s CTO (Marcus Chen) emailed your CEO this morning requesting a call "within 24 hours." Their renewal is in 45 days and they mentioned evaluating alternatives. Engineering has a fix ready but needs you to confirm deployment timing with the customer.'
+      },
+      rankingRationale: 'CTO escalation, $450K renewal at risk'
+    },
     thread: {
       comments: [
         {
@@ -1609,14 +1691,29 @@ export const alerts: Alert[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'pulse',
-    memoryRationale: 'High probability (36% above baseline, customer complaints) × High impact (affects user experience). Platform team investigating.',
+    memoryRationale: 'Three enterprise customers have reported issues. Platform team is investigating but may need you to join the call.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['Platform Team', 'DevOps'],
     evidence: [
       { type: 'Datadog', url: 'latency-alert', preview: 'p95: 340ms (baseline: 250ms)' },
       { type: 'Slack', url: '#incidents', preview: '3 customer complaints in last 2 hours' }
-    ]
+    ],
+    memory: {
+      lifecycleState: 'entered',
+      enteredAt: '2026-02-02T07:20:00',
+      activeDays: 0,
+      hasAppearedBefore: false,
+      origin: {
+        type: 'signal',
+        description: 'Datadog triggered this alert at 7:20 AM when p95 latency crossed 340ms (baseline: 250ms). The spike started around 3 AM, likely correlated with the batch job deployment at 2:45 AM.'
+      },
+      trigger: {
+        type: 'external_signal',
+        description: 'Three enterprise customers (Northstar, Lumen, TechFlow) opened support tickets in the last 2 hours. Platform team started investigating at 7:30 AM and suspects the new batch processing job. They may need approval to roll back.'
+      },
+      rankingRationale: 'Active customer impact, investigation underway'
+    }
   }
 ];
 
@@ -1676,13 +1773,29 @@ export const commitments: Commitment[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'horizon',
-    memoryRationale: 'High probability (due today, CTO waiting) × High impact (blocks Q2 headcount decisions). Complete today.',
+    memoryRationale: 'The CTO needs this by end of day to finalize Q2 headcount decisions at tomorrow\'s board meeting.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['CTO', 'People Ops'],
     evidence: [
       { type: 'Meeting', url: 'm-past-2', preview: 'CTO: "Can we get a review by EOD?"' }
-    ]
+    ],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-22T14:45:00',
+      activeDays: 12,
+      hasAppearedBefore: true,
+      previousAppearances: 2,
+      origin: {
+        type: 'meeting',
+        description: 'You committed to this during the Jan 22 Engineering Weekly. The CTO asked: "Can we get a review of the hiring plan by end of week?" You said you\'d have it by Monday (Feb 3), but then clarified you could do today (Feb 2) if needed.'
+      },
+      trigger: {
+        type: 'deadline',
+        description: 'Today is the deadline. The CTO has a board presentation tomorrow morning where she needs to present finalized Q2 headcount. People Ops sent you the updated candidate pipeline yesterday—all the inputs are ready for your review.'
+      },
+      rankingRationale: 'Due today, blocks board presentation tomorrow'
+    }
   },
   {
     id: 'c2',
@@ -1697,9 +1810,25 @@ export const commitments: Commitment[] = [
     probability: 'medium',
     impact: 'medium',
     focusCategory: 'horizon',
-    memoryRationale: 'This surfaced because it\'s a recurring commitment due tomorrow. The team references it during sprint planning.',
+    memoryRationale: 'The team references this during sprint planning. Last quarter\'s was well-received—worth maintaining the pattern.',
     needsIntervention: true,
-    needsDecision: false
+    needsDecision: false,
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-30T09:00:00',
+      activeDays: 4,
+      hasAppearedBefore: true,
+      previousAppearances: 1,
+      origin: {
+        type: 'commitment',
+        description: 'This is a quarterly recurring commitment. You started it after the Q3 retrospective was skipped and the team mentioned in the Oct all-hands that they missed the reflection time.'
+      },
+      trigger: {
+        type: 'scheduled',
+        description: 'Due tomorrow (Feb 3) before the Monday sprint planning meeting at 10 AM. Mike mentioned in Slack yesterday that he\'s looking forward to reviewing it—the team found Q4\'s format particularly useful.'
+      },
+      rankingRationale: 'Due tomorrow, team expecting it for sprint planning'
+    }
   },
   {
     id: 'c3',
@@ -1721,7 +1850,7 @@ export const commitments: Commitment[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'friction',
-    memoryRationale: 'High probability (6 days overdue) × Medium impact (frontend team blocked on mobile). Respond to Sarah today.',
+    memoryRationale: 'Sarah has been waiting 6 days. The frontend team is blocked on the mobile release until you respond.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['Sarah Chen', 'Frontend Team'],
@@ -1729,6 +1858,22 @@ export const commitments: Commitment[] = [
       { type: 'Slack', url: '#design-system', preview: 'Sarah: "@Alex just need a quick thumbs up"' },
       { type: 'Figma', url: 'design-tokens', preview: 'Design tokens v2 - ready for review' }
     ],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-27T14:00:00',
+      activeDays: 6,
+      hasAppearedBefore: true,
+      previousAppearances: 2,
+      origin: {
+        type: 'conversation',
+        description: 'Sarah shared the new color tokens in #design-system on Jan 27 after completing the accessibility audit you requested. She tagged you for approval and followed up on Jan 30 and again yesterday (Feb 1).'
+      },
+      trigger: {
+        type: 'dependency_change',
+        description: 'The mobile app v2.4 release is now blocked on this approval. Frontend Team mentioned in standup this morning that they\'ve already integrated the tokens assuming approval—if you have concerns, they\'ll need to revert and delay the release by at least a week.'
+      },
+      rankingRationale: 'Blocking mobile release, Sarah followed up 3 times'
+    },
     thread: {
       comments: [
         {
@@ -1771,13 +1916,29 @@ export const commitments: Commitment[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'horizon',
-    memoryRationale: 'This surfaced because the Feb 10 deadline is one week away and the CFO inputs haven\'t been gathered yet.',
+    memoryRationale: 'One week until deadline. You\'ll need CFO input on financials—schedule time with James this week.',
     needsIntervention: true,
     needsDecision: false,
     collaborators: ['CFO', 'Board Admin'],
     evidence: [
       { type: 'Email', url: 'investor-reminder', preview: 'Please submit by the 10th' }
-    ]
+    ],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-02-01T09:00:00',
+      activeDays: 1,
+      hasAppearedBefore: true,
+      previousAppearances: 1,
+      origin: {
+        type: 'document',
+        description: 'Board Admin sent the monthly reminder on Feb 1. This is the same format you\'ve done for the last 6 months. Last month\'s update was well-received—the board particularly appreciated the hiring pipeline section.'
+      },
+      trigger: {
+        type: 'deadline',
+        description: 'The Feb 10 deadline gives you 8 days. You typically need 2-3 days to compile, and James (CFO) mentioned in last week\'s sync that February financials will require extra context around the infrastructure spend variance.'
+      },
+      rankingRationale: 'Board deadline, requires CFO coordination'
+    }
   },
   {
     id: 'c5',
@@ -1797,6 +1958,22 @@ export const commitments: Commitment[] = [
     },
     attentionType: 'commitment',
     probability: 'medium',
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-15T10:00:00',
+      activeDays: 19,
+      hasAppearedBefore: true,
+      previousAppearances: 3,
+      origin: {
+        type: 'meeting',
+        description: 'The Q2 planning process started in the Jan 15 Product Roadmap Sync. You, the PM Lead, Sales, and Customer Success have been iterating on priorities for three weeks. The current draft has Enterprise SSO, Enhanced Sync, and Mobile 2.0 as the top three.'
+      },
+      trigger: {
+        type: 'deadline',
+        description: 'Feb 14 is the lock date—engineering sprint planning for Q2 starts Feb 17. PM Lead mentioned in yesterday\'s sync that Sales has a late request to prioritize the Salesforce integration. You may need to make a final call on whether it bumps something off.'
+      },
+      rankingRationale: 'Sprint planning starts Feb 17, late request pending'
+    },
     impact: 'high',
     focusCategory: 'pulse',
     memoryRationale: 'This surfaced because the roadmap discussion has been active, and a decision point is approaching on Feb 14.',
@@ -1827,7 +2004,7 @@ export const commitments: Commitment[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'horizon',
-    memoryRationale: 'High probability (3 active opps at decision stage) × High impact ($83K potential NRR). Window is this week before Q2 budget locks.',
+    memoryRationale: 'Three expansion conversations totaling $83K are at decision stage. Q2 budget locks soon—this is the window to land them.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['CS Lead', 'Sales', 'Security'],
@@ -1931,7 +2108,7 @@ export const commitments: Commitment[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'horizon',
-    memoryRationale: 'High probability (SLA clock running) × High impact (enterprise customer affected). RCA due within 24 hours.',
+    memoryRationale: 'Enterprise customer affected, SLA clock is running. RCA is due within 24 hours.',
     needsIntervention: true,
     needsDecision: false,
     collaborators: ['DevOps', 'Platform Team'],
@@ -2133,7 +2310,7 @@ export const meetingBriefs: MeetingBrief[] = [
     probability: 'high',
     impact: 'high',
     focusCategory: 'pulse',
-    memoryRationale: 'High probability (3 enterprise customers affected) × High impact (trust at risk, post-mortem imminent). Join call for visibility.',
+    memoryRationale: 'Three enterprise customers are affected. The post-mortem is imminent—join the call for visibility.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['DevOps', 'CTO'],
@@ -2162,7 +2339,7 @@ export const meetingBriefs: MeetingBrief[] = [
     probability: 'medium',
     impact: 'medium',
     focusCategory: 'pulse',
-    memoryRationale: 'Medium probability (scheduled review) × High impact (mobile release blocked on decisions). Review prepared for you.',
+    memoryRationale: 'The mobile release is blocked on this review. Sarah has it ready for you—should take 15 minutes.',
     needsIntervention: true,
     needsDecision: true,
     collaborators: ['Sarah'],
@@ -2390,12 +2567,28 @@ export const relationshipAlerts: RelationshipAlert[] = [
     impact: 'high',
     needsIntervention: true,
     needsDecision: false,
-    memoryRationale: 'High probability (21 days since contact, she mentioned concerns) × High impact (key decision-maker for $500K contract). Relationships cool quickly after unaddressed concerns.',
+    memoryRationale: 'Sarah mentioned budget concerns in your last call. The quarter ends soon—worth checking in before decisions are made.',
     evidence: [
       { type: 'Email', url: '#', preview: 'Re: Q1 Budget Discussion - Jan 15' },
       { type: 'LinkedIn', url: '#', preview: 'Sarah posted about new initiatives' }
     ],
-    collaborators: ['Mike Rodriguez']
+    collaborators: ['Mike Rodriguez'],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-25T10:00:00',
+      activeDays: 9,
+      hasAppearedBefore: true,
+      previousAppearances: 1,
+      origin: {
+        type: 'conversation',
+        description: 'Your last call with Sarah was Jan 15, where she raised concerns about their Q1 budget allocation. She said: "We might need to delay the expansion if the numbers don\'t work out." You agreed to reconnect after she spoke with finance.'
+      },
+      trigger: {
+        type: 'inactivity',
+        description: 'It\'s been 21 days since that call. Northstar\'s Q1 ends Feb 28—budget decisions are likely being finalized now. Sarah also posted on LinkedIn yesterday about "exciting initiatives" which could be a good conversation starter.'
+      },
+      rankingRationale: 'Key relationship cooling, budget decisions imminent'
+    }
   },
   {
     id: 'rel-2',
@@ -2416,10 +2609,26 @@ export const relationshipAlerts: RelationshipAlert[] = [
     impact: 'medium',
     needsIntervention: true,
     needsDecision: false,
-    memoryRationale: 'High probability (explicit request unfulfilled for 8 days) × Medium impact (active technical evaluation). Broken promises erode trust quickly.',
+    memoryRationale: 'You promised David the API docs 8 days ago. He\'s in the middle of a technical evaluation—sending it now shows reliability.',
     evidence: [
       { type: 'Email', url: '#', preview: 'Re: API Integration Questions - Jan 28' }
-    ]
+    ],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-30T10:00:00',
+      activeDays: 4,
+      hasAppearedBefore: true,
+      previousAppearances: 1,
+      origin: {
+        type: 'conversation',
+        description: 'David emailed on Jan 28 asking about rate limits and authentication. You replied: "I\'ll send over the full API docs tomorrow—they cover all of this in detail."'
+      },
+      trigger: {
+        type: 'inactivity',
+        description: 'It\'s been 8 days since your promise. TechFlow is actively evaluating integration options—their engineering team has a decision meeting next week. The longer you wait, the more it signals unreliability.'
+      },
+      rankingRationale: 'Unfulfilled promise, active technical evaluation'
+    }
   },
   {
     id: 'rel-3',
@@ -2440,11 +2649,26 @@ export const relationshipAlerts: RelationshipAlert[] = [
     impact: 'high',
     needsIntervention: true,
     needsDecision: false,
-    memoryRationale: 'Medium probability (company news creates natural touchpoint) × High impact (digital transformation = potential large deal). Timely outreach on company news shows you pay attention.',
+    memoryRationale: 'Acme just announced a $10M digital transformation—this is exactly what you and Maria discussed. A timely note could open doors.',
     evidence: [
       { type: 'News', url: '#', preview: 'Acme Corp Announces $10M Digital Transformation' },
       { type: 'Email', url: '#', preview: 'Re: Legacy System Discussion - Jan 20' }
-    ]
+    ],
+    memory: {
+      lifecycleState: 'entered',
+      enteredAt: '2026-02-02T08:00:00',
+      activeDays: 0,
+      hasAppearedBefore: false,
+      origin: {
+        type: 'signal',
+        description: 'Market Intelligence flagged Acme Corp\'s press release this morning. You last spoke with Maria on Jan 20 about their legacy system challenges—she mentioned they were "exploring options but nothing formal yet."'
+      },
+      trigger: {
+        type: 'external_signal',
+        description: 'The $10M digital transformation initiative was just announced. Maria will likely be involved given her Ops role. A congratulatory note that references your earlier conversation shows you pay attention and positions you well for the RFP process.'
+      },
+      rankingRationale: 'Natural touchpoint, potential large opportunity'
+    }
   },
   {
     id: 'rel-4',
@@ -2465,12 +2689,28 @@ export const relationshipAlerts: RelationshipAlert[] = [
     impact: 'high',
     needsIntervention: true,
     needsDecision: false,
-    memoryRationale: 'High probability (4 months without contact, commitment broken) × High impact (investor relationship, board member). Silent founders worry investors.',
+    memoryRationale: 'You promised quarterly updates but it\'s been 4 months. James is a board member—silence makes investors nervous.',
     evidence: [
       { type: 'Calendar', url: '#', preview: 'Q3 Investor Update - Oct 5' },
       { type: 'Email', url: '#', preview: 'Thanks for the update - James' }
     ],
-    collaborators: ['CEO', 'CFO']
+    collaborators: ['CEO', 'CFO'],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-01-05T10:00:00',
+      activeDays: 29,
+      hasAppearedBefore: true,
+      previousAppearances: 2,
+      origin: {
+        type: 'commitment',
+        description: 'After the Series A, you committed to quarterly investor updates. James specifically mentioned appreciating transparency in his post-Q3 email: "This is exactly the level of detail we like to see. Looking forward to the Q4 update."'
+      },
+      trigger: {
+        type: 'inactivity',
+        description: 'It\'s now February—Q4 update is over a month overdue. James hasn\'t reached out, which could mean he\'s busy or concerned. Either way, proactive communication is better than reactive. The board meeting is Feb 20.'
+      },
+      rankingRationale: 'Board member, commitment broken, meeting approaching'
+    }
   }
 ];
 
@@ -2500,7 +2740,22 @@ export const asyncCommitments: Commitment[] = [
     impact: 'high',
     needsIntervention: false,
     needsDecision: true,
-    memoryRationale: 'High probability (due tomorrow, no draft started) × High impact ($200K deal). Email promises are easy to forget but remembered by recipients.'
+    memoryRationale: 'You promised this by end of week—$200K deal depends on it. David is expecting it tomorrow.',
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-02-03T09:15:00',
+      activeDays: 2,
+      hasAppearedBefore: false,
+      origin: {
+        type: 'conversation',
+        description: 'David replied to your proposal on Feb 3 asking for volume discount options. You said you\'d have a revised proposal by end of week.'
+      },
+      trigger: {
+        type: 'deadline',
+        description: 'End of week is tomorrow. David mentioned their evaluation committee meets Monday, so they need it before then to include you in their final shortlist.'
+      },
+      rankingRationale: 'Large deal, deadline tomorrow'
+    }
   },
   {
     id: 'async-2',
@@ -2524,8 +2779,24 @@ export const asyncCommitments: Commitment[] = [
     impact: 'medium',
     needsIntervention: true,
     needsDecision: false,
-    memoryRationale: 'High probability (2 days overdue, team waiting) × Medium impact (blocking release but not customer-facing). Slack requests get buried but team remembers.',
-    collaborators: ['Alex Rivera', 'Mobile Team']
+    memoryRationale: 'Alex and the mobile team have been waiting 2 days. The release is blocked on your review.',
+    collaborators: ['Alex Rivera', 'Mobile Team'],
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-02-02T16:45:00',
+      activeDays: 3,
+      hasAppearedBefore: true,
+      previousAppearances: 1,
+      origin: {
+        type: 'conversation',
+        description: 'Alex tagged you in #engineering on Feb 2: "@you can you review this? Blocking mobile release." The PR implements the sync optimization you discussed in the architecture review.'
+      },
+      trigger: {
+        type: 'dependency_change',
+        description: 'It\'s now 2 days overdue. Alex followed up yesterday and the mobile team mentioned in standup they\'re waiting on this to cut the release. A 30-minute review today would unblock them.'
+      },
+      rankingRationale: 'Team blocked, overdue, quick to resolve'
+    }
   },
   {
     id: 'async-3',
@@ -2547,7 +2818,22 @@ export const asyncCommitments: Commitment[] = [
     impact: 'medium',
     needsIntervention: false,
     needsDecision: true,
-    memoryRationale: 'Medium probability (2 days until due, shared doc) × Medium impact (shapes team direction). Your input matters for resource allocation.'
+    memoryRationale: 'Comments are due Friday before the planning meeting. Your input shapes where resources go next quarter.',
+    memory: {
+      lifecycleState: 'persisting',
+      enteredAt: '2026-02-01T10:00:00',
+      activeDays: 4,
+      hasAppearedBefore: false,
+      origin: {
+        type: 'document',
+        description: 'Leadership shared the Q1 OKRs draft in Notion on Feb 1 with a request for input by Friday. The doc has comments from 4 people so far but not from you.'
+      },
+      trigger: {
+        type: 'deadline',
+        description: 'Friday planning is in 2 days. Last quarter you missed the comment window and had to raise concerns in the meeting itself—which took longer and felt disruptive.'
+      },
+      rankingRationale: 'Comment window closing, shapes Q1 direction'
+    }
   },
   {
     id: 'async-4',
@@ -2569,7 +2855,7 @@ export const asyncCommitments: Commitment[] = [
     impact: 'low',
     needsIntervention: false,
     needsDecision: false,
-    memoryRationale: 'Medium probability (deadline approaching) × Low impact (personal reimbursement). Not urgent but easy to procrastinate.'
+    memoryRationale: 'Not urgent but easy to keep pushing off. The deadline is Feb 10.'
   },
   {
     id: 'async-5',
@@ -2593,8 +2879,23 @@ export const asyncCommitments: Commitment[] = [
     impact: 'high',
     needsIntervention: true,
     needsDecision: true,
-    memoryRationale: 'High probability (customer waiting, SLA risk) × High impact (Northstar is largest account). Support escalations have implicit urgency.',
-    collaborators: ['Support Team', 'Sarah Chen']
+    memoryRationale: 'Northstar is your largest account and they\'re hitting rate limits. Support needs engineering guidance on a workaround.',
+    collaborators: ['Support Team', 'Sarah Chen'],
+    memory: {
+      lifecycleState: 'entered',
+      enteredAt: '2026-02-04T11:30:00',
+      activeDays: 1,
+      hasAppearedBefore: false,
+      origin: {
+        type: 'signal',
+        description: 'Support escalated in #support-escalations at 11:30 AM yesterday. Northstar is hitting rate limits during their end-of-month processing and needs a workaround.'
+      },
+      trigger: {
+        type: 'external_signal',
+        description: 'This is time-sensitive—Northstar\'s end-of-month processing continues through tomorrow. Either a temporary rate limit increase or a batching workaround would help. Sarah from CS is standing by to relay the solution.'
+      },
+      rankingRationale: 'Largest account, time-sensitive, SLA risk'
+    }
   }
 ];
 

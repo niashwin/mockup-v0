@@ -1,9 +1,10 @@
 import React, { useState, forwardRef } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   AlertTriangle,
   CheckCircle2,
   Calendar,
+  CalendarDays,
   Clock,
   Zap,
   Target,
@@ -11,9 +12,146 @@ import {
   Send,
   ArrowRight,
   Eye,
-  RotateCcw
+  RotateCcw,
+  ChevronRight,
+  Mail,
+  MessageSquare,
+  FileText
 } from 'lucide-react';
 import { AttentionItem, AttentionType } from '../types';
+
+// Quick Action types - only low-risk, obvious, supportive actions
+interface QuickAction {
+  id: string;
+  label: string;           // Short label for hover
+  previewText: string;     // What it will do
+  icon: React.ElementType;
+  actionType: 'email' | 'message' | 'request';
+}
+
+// Determine the single quick action for an item
+// Criteria: Low risk, Obvious, Supportive - never finalizes decisions or marks resolved
+function getQuickAction(item: AttentionItem): QuickAction | null {
+  const type = item.attentionType || item.itemType;
+
+  switch (type) {
+    case 'relationship':
+      // Follow-ups and check-ins
+      if (item.itemType === 'relationship') {
+        if (item.title.includes('follow-up') || item.title.includes('asked for')) {
+          return {
+            id: 'draft-followup',
+            label: 'Quick action',
+            previewText: 'Draft follow-up',
+            icon: Mail,
+            actionType: 'email'
+          };
+        }
+        return {
+          id: 'draft-checkin',
+          label: 'Quick action',
+          previewText: 'Draft check-in',
+          icon: Mail,
+          actionType: 'email'
+        };
+      }
+      return {
+        id: 'draft-message',
+        label: 'Quick action',
+        previewText: 'Draft message',
+        icon: Mail,
+        actionType: 'email'
+      };
+
+    case 'followup':
+      return {
+        id: 'draft-followup',
+        label: 'Quick action',
+        previewText: 'Prepare follow-up',
+        icon: Mail,
+        actionType: 'email'
+      };
+
+    case 'commitment':
+      // Draft update or nudge
+      if (item.itemType === 'commitment') {
+        if (item.status === 'overdue' || item.title.toLowerCase().includes('waiting')) {
+          return {
+            id: 'draft-update',
+            label: 'Quick action',
+            previewText: 'Draft update',
+            icon: Mail,
+            actionType: 'email'
+          };
+        }
+        // For pending commitments - send a status update
+        return {
+          id: 'draft-update',
+          label: 'Quick action',
+          previewText: 'Send update',
+          icon: Mail,
+          actionType: 'email'
+        };
+      }
+      return {
+        id: 'draft-update',
+        label: 'Quick action',
+        previewText: 'Draft update',
+        icon: Mail,
+        actionType: 'email'
+      };
+
+    case 'blocker':
+      // Nudges and clarifications
+      return {
+        id: 'draft-nudge',
+        label: 'Quick action',
+        previewText: 'Draft nudge',
+        icon: MessageSquare,
+        actionType: 'message'
+      };
+
+    case 'misalignment':
+      // Request for clarification or sync
+      return {
+        id: 'request-sync',
+        label: 'Quick action',
+        previewText: 'Request sync',
+        icon: MessageSquare,
+        actionType: 'message'
+      };
+
+    case 'risk':
+      // Flag or escalate
+      return {
+        id: 'draft-escalation',
+        label: 'Quick action',
+        previewText: 'Draft escalation',
+        icon: Mail,
+        actionType: 'email'
+      };
+
+    case 'meeting':
+      // Send prep note or agenda request
+      return {
+        id: 'send-prep',
+        label: 'Quick action',
+        previewText: 'Send prep note',
+        icon: Mail,
+        actionType: 'email'
+      };
+
+    default:
+      // Default: draft a message
+      return {
+        id: 'draft-message',
+        label: 'Quick action',
+        previewText: 'Draft message',
+        icon: Mail,
+        actionType: 'email'
+      };
+  }
+}
 
 // Category styling and icons
 const CATEGORY_CONFIG: Record<AttentionType, {
@@ -194,7 +332,16 @@ interface AttentionCardProps {
   onAction: (actionId: string, item: AttentionItem) => void;
   onExpand: (item: AttentionItem) => void;
   onShowEvidence?: (item: AttentionItem) => void;
+  onQuickAction?: (actionId: string, item: AttentionItem) => void;
+  onSchedule?: (item: AttentionItem) => void;
   isCompact?: boolean;
+}
+
+// Helper to determine if an item should show the Schedule action
+function shouldShowScheduleAction(item: AttentionItem): boolean {
+  const type = item.attentionType || item.itemType;
+  // Show schedule for relationship, meeting, and commitment types
+  return ['relationship', 'meeting', 'commitment'].includes(type);
 }
 
 export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
@@ -202,9 +349,16 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
   onAction,
   onExpand,
   onShowEvidence,
+  onQuickAction,
+  onSchedule,
   isCompact = false
 }, ref) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isQuickActionHovered, setIsQuickActionHovered] = useState(false);
+  const [isScheduleHovered, setIsScheduleHovered] = useState(false);
+
+  // Get quick action for this item (if eligible)
+  const quickAction = getQuickAction(item);
 
   // Get attention type
   const attentionType: AttentionType = item.attentionType ||
@@ -335,13 +489,94 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(({
         </div>
 
         {/* Item 9: Homepage only allows awareness, not dismissal - single action only */}
-        <button
-          onClick={() => onExpand(item)}
-          className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${config.bgColor} ${config.textColor} border ${config.borderColor} hover:shadow-md`}
-        >
-          <Eye size={14} />
-          See details
-        </button>
+        {/* Quick action affordance - subtle, adjacent to See details */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onExpand(item)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${config.bgColor} ${config.textColor} border ${config.borderColor} hover:shadow-md`}
+          >
+            <Eye size={14} />
+            See details
+          </button>
+
+          {/* Schedule action - shown for relationship, meeting, commitment types */}
+          {shouldShowScheduleAction(item) && onSchedule && (
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSchedule(item);
+                }}
+                onMouseEnter={() => setIsScheduleHovered(true)}
+                onMouseLeave={() => setIsScheduleHovered(false)}
+                className="p-2.5 rounded-lg border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-300 transition-all"
+                aria-label="Schedule meeting"
+              >
+                <CalendarDays size={16} />
+              </button>
+
+              {/* Hover tooltip for schedule */}
+              <AnimatePresence>
+                {isScheduleHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-zinc-900 dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-700 whitespace-nowrap z-10"
+                  >
+                    <div className="flex items-center gap-2">
+                      <CalendarDays size={12} className="text-emerald-400" />
+                      <span className="text-xs font-medium text-white">Schedule meeting</span>
+                    </div>
+                    <div className="text-[10px] text-zinc-500 mt-0.5">Find a time</div>
+                    {/* Tooltip arrow */}
+                    <div className="absolute -bottom-1 right-3 w-2 h-2 bg-zinc-900 dark:bg-zinc-800 border-r border-b border-zinc-700 rotate-45" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Quick action - only shown if eligible action exists */}
+          {quickAction && onQuickAction && (
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickAction(quickAction.id, item);
+                }}
+                onMouseEnter={() => setIsQuickActionHovered(true)}
+                onMouseLeave={() => setIsQuickActionHovered(false)}
+                className="p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-700 dark:hover:text-zinc-300 transition-all"
+                aria-label={quickAction.previewText}
+              >
+                <ChevronRight size={16} />
+              </button>
+
+              {/* Hover tooltip showing the action preview */}
+              <AnimatePresence>
+                {isQuickActionHovered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-zinc-900 dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-700 whitespace-nowrap z-10"
+                  >
+                    <div className="flex items-center gap-2">
+                      <quickAction.icon size={12} className="text-zinc-400" />
+                      <span className="text-xs font-medium text-white">{quickAction.previewText}</span>
+                    </div>
+                    <div className="text-[10px] text-zinc-500 mt-0.5">{quickAction.label}</div>
+                    {/* Tooltip arrow */}
+                    <div className="absolute -bottom-1 right-3 w-2 h-2 bg-zinc-900 dark:bg-zinc-800 border-r border-b border-zinc-700 rotate-45" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );

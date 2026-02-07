@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ThemeProvider, useTheme } from './components/ThemeProvider';
-import { 
-  Maximize2, 
-  Minimize2, 
-  Layout, 
-  Settings, 
+import {
+  Maximize2,
+  Minimize2,
+  Layout,
+  Settings,
   Search,
   ChevronRight,
   ChevronLeft,
@@ -21,6 +21,7 @@ import {
   Hash,
   ArrowUpRight,
   Calendar,
+  CalendarDays,
   Inbox,
   BarChart2,
   Users,
@@ -46,7 +47,9 @@ import {
   Share2,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  UsersRound,
+  Mail
 } from 'lucide-react';
 import sentraLogo from './assets/2d867a3a115cb7771d8ca0fe7bf3c137b72785fa.png';
 import { PillState } from './components/PillState';
@@ -60,6 +63,11 @@ import { Alert, Commitment, MeetingBrief } from './types';
 import { DynamicBackground } from './components/DynamicBackground';
 import { HighlightedContent, CommentLayer, CommentPanel, CommentHighlight } from './components/ReportComments';
 import { CrmPage } from './components/CrmPage';
+import { SchedulingProvider } from './components/SchedulingProvider';
+import { SchedulingSettingsSection } from './components/SchedulingSettingsSection';
+import { MeetingCaptureProvider } from './components/MeetingCaptureProvider';
+import { SentraPill } from './components/SentraPill';
+import { MeetingCaptureSummary } from './components/MeetingCaptureSummary';
 
 // --- Types ---
 type ViewMode = 'pill' | 'compact' | 'expanded';
@@ -166,6 +174,7 @@ const SettingsScreen = ({
     { id: 'Privacy', label: 'Privacy & Permissions', icon: AlertTriangle }, // reusing icon for now
     { id: 'Notifications', label: 'Notifications', icon: Bell },
     { id: 'Personalization', label: 'Personalization', icon: Layout },
+    { id: 'Scheduling', label: 'Scheduling', icon: CalendarDays },
     { id: 'Users', label: 'Users & Teams', icon: Users }
   ];
 
@@ -571,7 +580,7 @@ const SettingsScreen = ({
                   ))}
                 </div>
               </div>
-              
+
               <div>
                  <label className="block text-xs font-medium text-zinc-500 uppercase mb-3">Density</label>
                  <div className="flex gap-4">
@@ -580,6 +589,10 @@ const SettingsScreen = ({
                  </div>
               </div>
             </div>
+          )}
+
+          {activeSection === 'Scheduling' && (
+            <SchedulingSettingsSection />
           )}
         </div>
       </div>
@@ -2198,6 +2211,7 @@ const CompactState = ({
 import { MeetingDetailCard, PreMeetingBriefOverlay } from './components/MeetingComponents';
 import { MeetingDetailModal } from './components/MeetingDetailModal';
 import { PersonDetailPanel } from './components/PersonDetailPanel';
+import { EmailCompose } from './components/EmailCompose';
 
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
@@ -2207,6 +2221,47 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
   const [selectedPersonName, setSelectedPersonName] = useState<string | null>(null);
   const [showTranscriptId, setShowTranscriptId] = useState<string | null>(null);
   const [activeReportsDropdownId, setActiveReportsDropdownId] = useState<string | null>(null);
+  const [emailMeetingId, setEmailMeetingId] = useState<string | null>(null);
+
+  // Get meeting for email compose
+  const emailMeeting = emailMeetingId ? meetings.find(m => m.id === emailMeetingId) : null;
+
+  // Generate email content from meeting
+  const getEmailRecipients = (meeting: MeetingBrief | null) => {
+    if (!meeting) return '';
+    return meeting.attendees.map(name => {
+      const emailName = name.toLowerCase().replace(/\s+/g, '.');
+      return `${name} <${emailName}@company.com>`;
+    }).join(', ');
+  };
+
+  const getEmailSubject = (meeting: MeetingBrief | null) => {
+    if (!meeting) return '';
+    return `Follow-up: ${meeting.title}`;
+  };
+
+  const getEmailBody = (meeting: MeetingBrief | null) => {
+    if (!meeting) return '';
+    return `Hi team,
+
+Thank you for joining ${meeting.title}. Here's a quick follow-up with the key points from our discussion.
+
+**Key Discussion Points:**
+• [Key point 1 from the meeting]
+• [Key point 2 from the meeting]
+• [Key point 3 from the meeting]
+
+**Action Items:**
+• [Action item 1] - Owner: [Name], Due: [Date]
+• [Action item 2] - Owner: [Name], Due: [Date]
+
+**Next Steps:**
+[Brief description of what happens next]
+
+Please let me know if I missed anything or if you have questions.
+
+Best,`;
+  };
 
   // Convert relative dates to actual date format (Feb 3, Feb 4, etc.)
   const formatMeetingTime = (timeString: string) => {
@@ -2335,21 +2390,9 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
          <div className="absolute -inset-6 rounded-[2.5rem] bg-orange-500/10 blur-3xl pointer-events-none" />
          <div className="absolute -inset-1 rounded-[2.25rem] border border-orange-200/50 dark:border-orange-900/30 pointer-events-none" />
          <div className="relative flex flex-col min-h-full">
-           <header className="mb-8 flex items-center justify-between shrink-0">
-              <div>
-                <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Meetings</h1>
-                <p className="text-zinc-500 dark:text-zinc-400 mt-1">Upcoming and past discussions.</p>
-              </div>
-              <div className="flex items-center gap-3">
-                 <button onClick={() => { setIsRecording(true); setMode('pill'); }} className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/50 rounded-lg text-sm font-medium hover:bg-red-500/20 transition-colors">
-                    <Mic size={16} />
-                    Start
-                 </button>
-                 <button className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-                   <Calendar size={16} />
-                   Schedule
-                 </button>
-              </div>
+           <header className="mb-8 shrink-0">
+              <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Meetings</h1>
+              <p className="text-zinc-500 dark:text-zinc-400 mt-1">Upcoming and past discussions.</p>
            </header>
 
            <div className="space-y-6 pb-20">
@@ -2376,8 +2419,8 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
                                   ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900/30'
                                   : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30'
                               }`}>
-                                {meeting.isPrivate ? <Lock size={9} /> : <Unlock size={9} />}
-                                {meeting.isPrivate ? 'Private' : 'Shared'}
+                                {meeting.isPrivate ? <Lock size={9} /> : <UsersRound size={9} />}
+                                {meeting.isPrivate ? 'Private' : 'Company-wide'}
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-zinc-500 mt-0.5">
@@ -2387,7 +2430,7 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
                             </div>
                          </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-3">
                          <button
                            onClick={(e) => {
@@ -2397,11 +2440,11 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
                            className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border transition-all shadow-sm cursor-pointer group/btn active:scale-95 ${
                              meeting.isPrivate
                                ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 border-orange-100 dark:border-orange-900/30 hover:bg-orange-100/70'
-                               : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                               : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/30 hover:bg-emerald-100/70'
                            }`}
                          >
-                           {meeting.isPrivate ? <Lock size={10} /> : <Unlock size={10} />}
-                           {meeting.isPrivate ? 'Private' : 'Shared'}
+                           {meeting.isPrivate ? <Lock size={10} /> : <UsersRound size={10} />}
+                           {meeting.isPrivate ? 'Private' : 'Company-wide'}
                          </button>
                          {meeting.reportStatus === 'published' && (
                             <button 
@@ -2416,58 +2459,16 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
                             </button>
                          )}
                          {meeting.reportStatus === 'published' && (
-                            <div className="relative">
-                              <button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveReportsDropdownId(activeReportsDropdownId === meeting.id ? null : meeting.id);
-                                }}
-                                className={`flex items-center gap-1.5 px-2 py-1 ${activeReportsDropdownId === meeting.id ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-blue-50 dark:bg-blue-900/20'} text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded text-[10px] font-bold border border-blue-100 dark:border-blue-900/30 transition-all shadow-sm cursor-pointer group/btn active:scale-95`}
-                              >
-                                 <FileText size={10} />
-                                 Reports ({mockReports.length})
-                                 <ChevronDown size={10} className={`transition-transform duration-200 ${activeReportsDropdownId === meeting.id ? 'rotate-180' : ''}`} />
-                              </button>
-
-                              <AnimatePresence>
-                                {activeReportsDropdownId === meeting.id && (
-                                  <motion.div
-                                    initial={{ opacity: 0, y: 4, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                                    className="absolute top-full right-0 mt-2 w-64 max-h-56 overflow-y-auto bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-white/10 rounded-xl shadow-xl z-[60] p-1.5 custom-scrollbar"
-                                  >
-                                    <div className="px-2 py-1 mb-1 border-b border-zinc-100 dark:border-white/5">
-                                      <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Select Report</span>
-                                    </div>
-                                    <div className="space-y-0.5">
-                                      {mockReports.map((report) => (
-                                        <button
-                                          key={report.id}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setViewReportId(meeting.id);
-                                            setActiveReportsDropdownId(null);
-                                          }}
-                                          className="w-full text-left px-2 py-2 hover:bg-zinc-100 dark:hover:bg-white/5 rounded-lg transition-colors group/item"
-                                        >
-                                          <div className="flex items-start justify-between gap-2">
-                                            <div className="flex-1 min-w-0">
-                                              <h4 className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 truncate group-hover/item:text-blue-500 transition-colors">{report.title}</h4>
-                                              <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-[8px] text-zinc-400 uppercase font-medium">{report.category}</span>
-                                                <span className="text-[8px] text-zinc-400 font-mono">{report.date}</span>
-                                              </div>
-                                            </div>
-                                            <ArrowUpRight size={10} className="text-zinc-300 group-hover/item:text-blue-500 mt-0.5" />
-                                          </div>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEmailMeetingId(meeting.id);
+                              }}
+                              className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded text-[10px] font-bold border border-blue-100 dark:border-blue-900/30 transition-all shadow-sm cursor-pointer group/btn active:scale-95"
+                            >
+                               <Mail size={10} className="group-hover/btn:scale-110 transition-transform" />
+                               Email
+                            </button>
                          )}
                          {meeting.status === 'completed' && (
                             <button 
@@ -2526,12 +2527,12 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
                                  <div className="flex items-center gap-2 flex-wrap">
                                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 transition-colors">{meeting.title}</h3>
                                    <span className={`flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
-                                     meeting.isPrivate 
+                                     meeting.isPrivate
                                        ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900/30'
                                        : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30'
                                    }`}>
-                                     {meeting.isPrivate ? <Lock size={9} /> : <Unlock size={9} />}
-                                     {meeting.isPrivate ? 'Private' : 'Shared'}
+                                     {meeting.isPrivate ? <Lock size={9} /> : <UsersRound size={9} />}
+                                     {meeting.isPrivate ? 'Private' : 'Company-wide'}
                                    </span>
                                  </div>
                                  <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
@@ -2552,11 +2553,11 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
                              className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold border transition-all shadow-sm cursor-pointer group/btn active:scale-95 ${
                                meeting.isPrivate
                                  ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 border-orange-100 dark:border-orange-900/30 hover:bg-orange-100/70'
-                                 : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border-zinc-200 dark:border-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                 : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/30 hover:bg-emerald-100/70'
                              }`}
                            >
-                             {meeting.isPrivate ? <Lock size={10} /> : <Unlock size={10} />}
-                             {meeting.isPrivate ? 'Private' : 'Shared'}
+                             {meeting.isPrivate ? <Lock size={10} /> : <UsersRound size={10} />}
+                             {meeting.isPrivate ? 'Private' : 'Company-wide'}
                            </button>
                         </div>
                      </div>
@@ -2580,9 +2581,18 @@ const MeetingsScreen = ({ setMode, setIsRecording, meetings, onTogglePrivacy }: 
          />
          
          {/* Person Detail Panel */}
-         <PersonDetailPanel 
+         <PersonDetailPanel
            personName={selectedPersonName}
            onClose={() => setSelectedPersonName(null)}
+         />
+
+         {/* Email Compose for Meeting Follow-up */}
+         <EmailCompose
+           isOpen={!!emailMeetingId}
+           onClose={() => setEmailMeetingId(null)}
+           prefillTo={getEmailRecipients(emailMeeting)}
+           prefillSubject={getEmailSubject(emailMeeting)}
+           prefillBody={getEmailBody(emailMeeting)}
          />
       </div>
     </div>
@@ -3082,16 +3092,42 @@ const ExpandedState = ({
 
           <div className="flex items-center gap-3">
              {activeTab === 'Meetings' && (
-               <div className="flex items-center gap-2 px-2.5 py-1 rounded-full border border-zinc-200/70 dark:border-zinc-800/70 bg-white/70 dark:bg-zinc-900/70">
-                 <div className="flex items-center gap-1 text-[11px] font-bold text-orange-600">
-                   <Lock size={11} />
-                   {privatePercent}% Private
-                 </div>
-                 <div className="w-px h-3.5 bg-zinc-200 dark:bg-zinc-800" />
-                 <div className="text-[11px] text-zinc-500">
-                   {privateCount}/{totalCount}
-                 </div>
-               </div>
+               (() => {
+                 // Dynamic styling based on private percentage
+                 const getPrivateColor = () => {
+                   if (privatePercent < 20) return 'text-zinc-500 dark:text-zinc-400';
+                   if (privatePercent < 30) return 'text-orange-500';
+                   return 'text-red-500';
+                 };
+                 const getBorderColor = () => {
+                   if (privatePercent < 20) return 'border-zinc-200/70 dark:border-zinc-800/70';
+                   if (privatePercent < 30) return 'border-orange-200/70 dark:border-orange-800/70';
+                   return 'border-red-200/70 dark:border-red-800/70';
+                 };
+                 const getBgColor = () => {
+                   if (privatePercent < 20) return 'bg-white/70 dark:bg-zinc-900/70';
+                   if (privatePercent < 30) return 'bg-orange-50/70 dark:bg-orange-900/20';
+                   return 'bg-red-50/70 dark:bg-red-900/20';
+                 };
+                 // Font size scales from 11px (0%) to 18px (100%) - matching "Meetings" title at 100%
+                 const baseFontSize = 11;
+                 const maxFontSize = 18;
+                 const fontSize = baseFontSize + ((maxFontSize - baseFontSize) * (privatePercent / 100));
+                 const iconSize = Math.round(11 + (7 * (privatePercent / 100)));
+
+                 return (
+                   <div className={`flex items-center gap-2 px-2.5 py-1 rounded-full border ${getBorderColor()} ${getBgColor()} transition-all`}>
+                     <div className={`flex items-center gap-1 font-bold ${getPrivateColor()}`} style={{ fontSize: `${fontSize}px` }}>
+                       <Lock size={iconSize} />
+                       {privatePercent}% Private
+                     </div>
+                     <div className="w-px h-3.5 bg-zinc-200 dark:bg-zinc-800" />
+                     <div className="text-[11px] text-zinc-500">
+                       {privateCount}/{totalCount}
+                     </div>
+                   </div>
+                 );
+               })()
              )}
              <ViewControls mode="expanded" setMode={setMode} />
           </div>
@@ -3343,60 +3379,70 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider defaultTheme="dark">
-      {/* Toaster must be outside overflow-hidden container */}
-      <Toaster />
-      <div className={`min-h-screen app-shell font-sans text-zinc-900 dark:text-zinc-100 relative overflow-hidden transition-colors duration-500 ${isOverlay ? 'overlay-root' : ''}`}>
+    <SchedulingProvider>
+      <MeetingCaptureProvider>
+        <ThemeProvider defaultTheme="dark">
+          {/* Toaster must be outside overflow-hidden container */}
+          <Toaster />
+          <div className={`min-h-screen app-shell font-sans text-zinc-900 dark:text-zinc-100 relative overflow-hidden transition-colors duration-500 ${isOverlay ? 'overlay-root' : ''}`}>
 
-        <AnimatePresence mode="wait">
-          {mode === 'pill' && !window?.electronAPI && (
-            <PillState 
-              key="pill" 
-              onClick={() => {
-                if (isOverlay && window?.electronAPI?.openMain) {
-                  window.electronAPI.openMain();
-                } else {
-                  setMode('compact');
-                }
-              }} 
-              isRecording={isRecording} 
-              setIsRecording={setIsRecording} 
-              setMode={setMode} 
-              onCommit={handleCommitMeeting}
-              isOverlay={isOverlay}
-            />
-          )}
-          {mode === 'compact' && (
-            <CompactState 
-              key="compact" 
-              setMode={setMode} 
-              commitments={commitmentsData} 
-              onCompleteCommitment={handleCompleteCommitment} 
-              isDesktopShell={isDesktopShell}
-            />
-          )}
-          {mode === 'expanded' && (
-            <ExpandedState
-              key="expanded"
-              setMode={setMode}
-              setIsRecording={setIsRecording}
-              commitments={commitmentsData}
-              onToggleCommitment={handleToggleCommitment}
-              onAddCommitment={handleAddCommitment}
-              onTogglePrivacy={handleToggleMeetingPrivacy}
-              meetings={meetingsData}
-              users={usersData}
-              setUsers={setUsersData}
-              teams={teamsData}
-              setTeams={setTeamsData}
-              isDesktopShell={isDesktopShell}
-            />
-          )}
-        </AnimatePresence>
-      </div>
+            <AnimatePresence mode="wait">
+              {mode === 'pill' && !window?.electronAPI && (
+                <PillState
+                  key="pill"
+                  onClick={() => {
+                    if (isOverlay && window?.electronAPI?.openMain) {
+                      window.electronAPI.openMain();
+                    } else {
+                      setMode('expanded');
+                    }
+                  }}
+                  isRecording={isRecording}
+                  setIsRecording={setIsRecording}
+                  setMode={setMode}
+                  onCommit={handleCommitMeeting}
+                  isOverlay={isOverlay}
+                />
+              )}
+              {mode === 'compact' && (
+                <CompactState
+                  key="compact"
+                  setMode={setMode}
+                  commitments={commitmentsData}
+                  onCompleteCommitment={handleCompleteCommitment}
+                  isDesktopShell={isDesktopShell}
+                />
+              )}
+              {mode === 'expanded' && (
+                <ExpandedState
+                  key="expanded"
+                  setMode={setMode}
+                  setIsRecording={setIsRecording}
+                  commitments={commitmentsData}
+                  onToggleCommitment={handleToggleCommitment}
+                  onAddCommitment={handleAddCommitment}
+                  onTogglePrivacy={handleToggleMeetingPrivacy}
+                  meetings={meetingsData}
+                  users={usersData}
+                  setUsers={setUsersData}
+                  teams={teamsData}
+                  setTeams={setTeamsData}
+                  isDesktopShell={isDesktopShell}
+                />
+              )}
+            </AnimatePresence>
+          </div>
 
-      {/* Persistent Chat Bar - rendered OUTSIDE the overflow-hidden container */}
-      {mode === 'expanded' && <PersistentChatBar />}
-    </ThemeProvider>
+          {/* Persistent Chat Bar - rendered OUTSIDE the overflow-hidden container */}
+          {mode === 'expanded' && <PersistentChatBar />}
+
+          {/* Sentra Meeting Capture Pill */}
+          {mode === 'expanded' && <SentraPill />}
+
+          {/* Meeting Capture Summary Modal */}
+          <MeetingCaptureSummary />
+        </ThemeProvider>
+      </MeetingCaptureProvider>
+    </SchedulingProvider>
   );
 }

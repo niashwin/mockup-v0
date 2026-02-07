@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, X, Trash2, Lock, Check, PencilLine, Link } from 'lucide-react';
 import sentraLogo from '../assets/2d867a3a115cb7771d8ca0fe7bf3c137b72785fa.png';
@@ -19,31 +19,9 @@ export const PillState = ({
   onCommit: (type: 'private' | 'public', title: string, references: string) => void;
   isOverlay?: boolean;
 }) => {
-  const [isHovering, setIsHovering] = useState(false);
   const [showPostRecording, setShowPostRecording] = useState(false);
   const [noteTitle, setNoteTitle] = useState('New Meeting Note');
   const [noteReferences, setNoteReferences] = useState('');
-  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Timer for auto-expanding to compact on hover
-  useEffect(() => {
-    // Only expand if we are NOT recording and NOT in the post-recording menu
-    if (isHovering && !isRecording && !showPostRecording) {
-      hoverTimerRef.current = setTimeout(() => {
-        if (isOverlay && window?.electronAPI?.openMain) {
-          window.electronAPI.openMain('compact');
-        } else {
-          setMode('compact');
-        }
-      }, 3000);
-    } else {
-      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    }
-    
-    return () => {
-      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current);
-    };
-  }, [isHovering, isRecording, showPostRecording, setMode, isOverlay]);
 
   const handleMicClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -167,8 +145,6 @@ export const PillState = ({
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
         onClick={onClick}
       >
         {/* Logo Area */}

@@ -297,6 +297,109 @@ export type CompanyStatus = 'active' | 'prospect' | 'churned' | 'paused';
 export type CompanyTier = 'enterprise' | 'growth' | 'startup';
 export type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
 
+// ============================================================================
+// Scheduling Types
+// ============================================================================
+
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+export type LocationMode = 'remote' | 'hybrid' | 'office';
+export type MeetingContextType = 'breakfast' | 'lunch' | 'dinner' | 'virtual-only';
+
+export interface TimeRange {
+  start: string; // HH:mm format
+  end: string;   // HH:mm format
+}
+
+export interface DaySchedule {
+  day: DayOfWeek;
+  enabled: boolean;
+  timeRanges: TimeRange[];
+}
+
+export interface DateException {
+  date: string; // YYYY-MM-DD format
+  isAvailable: boolean;
+  reason?: string;
+  customTimeRanges?: TimeRange[];
+}
+
+export interface WorkingAvailability {
+  timezone: string;
+  weekSchedule: DaySchedule[];
+  exceptions: DateException[];
+}
+
+export interface SavedLocation {
+  id: string;
+  name: string;
+  address: string;
+  type: 'office' | 'cafe' | 'restaurant' | 'other';
+  notes?: string;
+  isDefault?: boolean;
+}
+
+export interface WorkLocationPreferences {
+  mode: LocationMode;
+  officeAddress?: string;
+  homeAddress?: string;
+  preferredMeetingLocation?: 'office' | 'home' | 'flexible';
+}
+
+export interface MeetingContextPreferences {
+  allowBreakfastMeetings: boolean;
+  allowLunchMeetings: boolean;
+  allowDinnerMeetings: boolean;
+  virtualOnlyWindows: TimeRange[];
+  bufferBetweenMeetings: number; // minutes
+  maxMeetingsPerDay?: number;
+  focusTimeBlocks?: TimeRange[];
+}
+
+export interface SchedulingCommunicationStyle {
+  emailTemplate: string;
+  signature: string;
+  preferSchedulingLinks: boolean;
+  schedulingLinkUrl?: string;
+}
+
+export interface SchedulingPreferences {
+  workingAvailability: WorkingAvailability;
+  workLocation: WorkLocationPreferences;
+  meetingContext: MeetingContextPreferences;
+  savedLocations: SavedLocation[];
+  communicationStyle: SchedulingCommunicationStyle;
+}
+
+// Scheduling action flow types
+export type MeetingType = 'one-on-one' | 'group' | 'team-sync' | 'external';
+export type MeetingFormat = 'virtual' | 'in-person' | 'hybrid';
+export type MeetingMode = 'internal' | 'external';
+
+export interface SchedulingContext {
+  item?: AttentionItem;
+  recipient: {
+    name: string;
+    email?: string;
+    company?: string;
+  };
+  subject: string;
+  meetingType: MeetingType;
+  format: MeetingFormat;
+  mode: MeetingMode;
+  duration: number; // minutes
+  location?: string;
+  notes?: string;
+}
+
+export interface TimeSlot {
+  id: string;
+  start: Date;
+  end: Date;
+  score: number; // 0-100 preference score
+  isPreferred?: boolean;
+  conflictsWith?: string[]; // IDs of conflicting events
+}
+
 export interface CompanyDeal {
   id: string;
   name: string;
@@ -354,4 +457,208 @@ export interface Company {
   // Attention
   needsAttention?: boolean;
   attentionReason?: string;
+}
+
+// ============================================================================
+// Meeting Capture Types (Ambient Meeting Capture via Sentra Pill)
+// ============================================================================
+
+export type MeetingCaptureState = 'idle' | 'armed' | 'capturing' | 'attention' | 'processing' | 'complete';
+
+export interface CapturedDecision {
+  id: string;
+  summary: string;
+  participants?: string[];
+  timestamp: string;
+}
+
+export interface CapturedCommitment {
+  id: string;
+  summary: string;
+  owner?: string;
+  dueDate?: string;
+  timestamp: string;
+}
+
+export interface CapturedQuestion {
+  id: string;
+  summary: string;
+  askedBy?: string;
+  timestamp: string;
+  isResolved: boolean;
+}
+
+export interface MeetingTranscriptSegment {
+  id: string;
+  speaker?: string;
+  text: string;
+  timestamp: string;
+  confidence: number;
+}
+
+export interface MeetingCaptureSnapshot {
+  // What Sentra understood (1-2 sentences)
+  understanding: string;
+
+  // What entered organizational memory
+  decisions: CapturedDecision[];
+  commitments: CapturedCommitment[];
+  openQuestions: CapturedQuestion[];
+
+  // Meeting context
+  duration: number; // seconds
+  participantCount: number;
+  dominantTopics: string[];
+}
+
+export interface CapturedMeeting {
+  id: string;
+  startTime: string;
+  endTime: string;
+  duration: number; // seconds
+
+  // Core data
+  snapshot: MeetingCaptureSnapshot;
+  transcript: MeetingTranscriptSegment[];
+
+  // Metadata
+  source: 'manual' | 'calendar' | 'zoom' | 'meet' | 'teams';
+  calendarEventId?: string;
+  title?: string;
+  attendees?: string[];
+
+  // User actions
+  savedAs?: 'meeting' | 'thread' | 'private';
+  attachedToThreadId?: string;
+  isPrivate: boolean;
+}
+
+export interface UpcomingMeeting {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  attendees: string[];
+  location: string;
+  isActive: boolean;
+}
+
+// ============================================================================
+// Enhanced Meeting Transcript Types (Delight-focused)
+// ============================================================================
+
+/**
+ * Meeting Brief - The "first screenful" that answers:
+ * 1. Why did this meeting exist?
+ * 2. What changed because of it?
+ * 3. What is now expected to happen next?
+ */
+export interface MeetingBriefing {
+  purpose: string;          // 1 sentence - why the meeting existed
+  outcomes: string[];       // 2-3 bullets max - what changed
+  openThreads: string[];    // Things not resolved
+  humanRecognition: string; // One line of thoughtful recognition
+}
+
+/**
+ * Enhanced action item with organizational context
+ */
+export interface EnhancedActionItem {
+  id: string;
+  text: string;
+  assignee: string;
+  dueDate: string;
+  completed: boolean;
+
+  // Contextual awareness (auto-derived where possible)
+  affectsDownstream?: string;   // Who/what this affects
+  unblocks?: string;            // What this enables
+  riskIfIgnored?: string;       // When it becomes a problem
+
+  // Playback reference
+  transcriptTimestamp?: string;
+}
+
+/**
+ * Enhanced highlight with interpretation
+ */
+export interface MeetingHighlight {
+  id: string;
+  text: string;
+  speaker: string;
+  timestamp: string;
+
+  // What makes this important
+  interpretation?: string;      // "This confirms..." or "This signals..."
+  impactLevel: 'high' | 'medium' | 'low';
+  category: 'decision' | 'commitment' | 'risk' | 'insight' | 'question';
+}
+
+/**
+ * Enhanced transcript entry with playback markers
+ */
+export interface EnhancedTranscriptEntry {
+  id: string;
+  speaker: string;
+  time: string;
+  text: string;
+
+  // Markers for purposeful playback
+  isActionItem?: boolean;
+  isDecision?: boolean;
+  isHighlight?: boolean;
+  isQuestionResolved?: boolean;
+
+  // Visual emphasis during playback
+  emphasisLevel?: 'high' | 'medium' | 'none';
+}
+
+/**
+ * Link between transcript and generated briefs
+ */
+export interface TranscriptBriefLink {
+  briefId: string;
+  briefTitle: string;
+  createdAt: string;
+  status: 'active' | 'archived';
+}
+
+/**
+ * Delta from previous recurring meeting
+ */
+export interface MeetingDelta {
+  newDecisions: string[];
+  resolvedIssues: string[];
+  newRisks: string[];
+  progressMade: string[];
+}
+
+/**
+ * Full enhanced meeting data for transcript view
+ */
+export interface EnhancedMeetingData {
+  id: string;
+  title: string;
+  date: string;
+  duration: number;
+  participants: string[];
+
+  // The briefing layer
+  briefing: MeetingBriefing;
+
+  // Enhanced content
+  highlights: MeetingHighlight[];
+  actionItems: EnhancedActionItem[];
+  decisions: string[];
+
+  // Transcript
+  transcript: EnhancedTranscriptEntry[];
+
+  // Links to briefs
+  generatedBriefs: TranscriptBriefLink[];
+  derivedFrom?: string;  // Parent meeting if this continues a series
+
+  // For recurring meetings
+  isRecurring?: boolean;
+  delta?: MeetingDelta;
 }
