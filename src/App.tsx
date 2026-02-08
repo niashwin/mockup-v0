@@ -2355,9 +2355,13 @@ Best,`;
         meetingTitle={transcriptMeeting?.title}
       />
       {viewingReport && (
-          <PreMeetingBriefOverlay 
-            meeting={viewingReport} 
-            onClose={() => setViewReportId(null)} 
+          <PreMeetingBriefOverlay
+            meeting={viewingReport}
+            onClose={() => setViewReportId(null)}
+            onEmail={() => {
+              setEmailMeetingId(viewingReport.id);
+              setViewReportId(null);
+            }}
           />
       )}
       
@@ -2513,9 +2517,9 @@ Best,`;
                <div className="space-y-3 pt-4">
                   <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider pl-1">Later</h3>
                   {upcoming.slice(1).map(meeting => (
-                     <div 
-                        key={meeting.id} 
-                        onClick={() => setSelectedDetailId(meeting.id)}
+                     <div
+                        key={meeting.id}
+                        onClick={() => setViewReportId(meeting.id)}
                         className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-5 shadow-sm opacity-90 hover:opacity-100 transition-opacity cursor-pointer group"
                      >
                         <div className="flex justify-between items-start mb-2 gap-4">

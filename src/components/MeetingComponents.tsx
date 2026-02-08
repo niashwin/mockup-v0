@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   X, Calendar, MapPin, Video, ExternalLink, FileText,
-  ChevronRight, ArrowLeft, Clock, Lock, UsersRound, UserPlus, Target, CheckCircle2, AlertTriangle
+  ChevronRight, ArrowLeft, Clock, Lock, UsersRound, UserPlus, Target, CheckCircle2, AlertTriangle, Mail
 } from 'lucide-react';
 import { MeetingBrief } from '../types';
 
@@ -159,11 +159,17 @@ export const MeetingDetailCard = ({
 
 export const PreMeetingBriefOverlay = ({
   meeting,
-  onClose
+  onClose,
+  onEmail
 }: {
   meeting: MeetingBrief;
   onClose: () => void;
+  onEmail?: () => void;
 }) => {
+    const [showAddPeople, setShowAddPeople] = useState(false);
+    const [newPerson, setNewPerson] = useState('');
+    const [addedPeople, setAddedPeople] = useState<string[]>([]);
+
     // Mock data for the brief
     const briefData = {
       objective: `Review progress on ${meeting.title.toLowerCase()} and align on next steps.`,
@@ -178,6 +184,15 @@ export const PreMeetingBriefOverlay = ({
       ],
       context: 'This is a follow-up from last week\'s planning session. Key decisions from that meeting are pending confirmation.'
     };
+
+    const handleAddPerson = () => {
+      if (newPerson.trim()) {
+        setAddedPeople([...addedPeople, newPerson.trim()]);
+        setNewPerson('');
+      }
+    };
+
+    const allAttendees = [...meeting.attendees, ...addedPeople];
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
@@ -211,17 +226,47 @@ export const PreMeetingBriefOverlay = ({
                     {/* Attendees with Add button */}
                     <section>
                         <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-500">Attendees ({meeting.attendees.length})</h3>
-                            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-lg text-xs font-bold transition-colors">
+                            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-500">Attendees ({allAttendees.length})</h3>
+                            <button
+                              onClick={() => setShowAddPeople(!showAddPeople)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                                showAddPeople
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
+                              }`}
+                            >
                                 <UserPlus size={12} />
                                 Add people
                             </button>
                         </div>
+                        {showAddPeople && (
+                          <div className="flex gap-2 mb-3">
+                            <input
+                              type="text"
+                              value={newPerson}
+                              onChange={(e) => setNewPerson(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleAddPerson()}
+                              placeholder="Enter name or email..."
+                              className="flex-1 px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                              autoFocus
+                            />
+                            <button
+                              onClick={handleAddPerson}
+                              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        )}
                         <div className="flex flex-wrap gap-2">
-                            {meeting.attendees.map((person, idx) => (
+                            {allAttendees.map((person, idx) => (
                                 <span
                                     key={idx}
-                                    className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-lg text-sm text-zinc-700 dark:text-zinc-300"
+                                    className={`px-3 py-1.5 rounded-lg text-sm ${
+                                      idx >= meeting.attendees.length
+                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
+                                    }`}
                                 >
                                     {person}
                                 </span>
@@ -287,14 +332,25 @@ export const PreMeetingBriefOverlay = ({
                         )}
                         <span>{meeting.location}</span>
                     </div>
-                    {meeting.meetingLink && (
-                        <button
-                            onClick={() => window.open(meeting.meetingLink, '_blank')}
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition-colors"
-                        >
-                            Join Meeting <ExternalLink size={14} />
-                        </button>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {onEmail && (
+                            <button
+                                onClick={onEmail}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 text-blue-600 rounded-lg text-sm font-bold transition-colors border border-blue-100 dark:border-blue-900/30"
+                            >
+                                <Mail size={14} />
+                                Email Attendees
+                            </button>
+                        )}
+                        {meeting.meetingLink && (
+                            <button
+                                onClick={() => window.open(meeting.meetingLink, '_blank')}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold transition-colors"
+                            >
+                                Join Meeting <ExternalLink size={14} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
