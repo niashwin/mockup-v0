@@ -1,9 +1,12 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2 } from 'lucide-react';
-import { AttentionItem } from '../types';
-import { sortByAttentionScore, filterForAttentionPane } from '../utils/AttentionScore';
-import { AttentionCard } from './AttentionCard';
+import React from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { CheckCircle2 } from "lucide-react";
+import { AttentionItem } from "../types";
+import {
+  sortByAttentionScore,
+  filterForAttentionPane,
+} from "../utils/AttentionScore";
+import { AttentionCard } from "./AttentionCard";
 
 interface AttentionStreamProps {
   items: AttentionItem[];
@@ -18,7 +21,7 @@ export const AttentionStream: React.FC<AttentionStreamProps> = ({
   onAction,
   onExpand,
   onShowEvidence,
-  showAll = false
+  showAll = false,
 }) => {
   // Filter and sort items
   const attentionItems = showAll ? items : filterForAttentionPane(items);

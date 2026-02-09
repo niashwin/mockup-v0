@@ -1,15 +1,18 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { MapPin, Loader2, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import { MapPin, Loader2, AlertCircle } from "lucide-react";
 
 // Fix for default marker icon in Leaflet with webpack/vite
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
 interface GeocodingResult {
@@ -36,74 +39,77 @@ function MapUpdater({ center }: { center: [number, number] }) {
 
 export function MapPreview({
   address,
-  className = '',
-  height = '200px',
-  onAddressSelect
+  className = "",
+  height = "200px",
+  onAddressSelect,
 }: MapPreviewProps) {
   const [coordinates, setCoordinates] = useState<[number, number] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [displayAddress, setDisplayAddress] = useState<string>('');
+  const [displayAddress, setDisplayAddress] = useState<string>("");
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
-  const lastAddressRef = useRef<string>('');
+  const lastAddressRef = useRef<string>("");
 
   // Debounced geocoding function
-  const geocodeAddress = useCallback(async (searchAddress: string) => {
-    if (!searchAddress || searchAddress.length < 3) {
-      setCoordinates(null);
-      setError(null);
-      setDisplayAddress('');
-      return;
-    }
-
-    // Skip if same address
-    if (searchAddress === lastAddressRef.current) {
-      return;
-    }
-    lastAddressRef.current = searchAddress;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}&limit=1`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Sentra-Scheduling-App'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Geocoding request failed');
-      }
-
-      const results: GeocodingResult[] = await response.json();
-
-      if (results.length > 0) {
-        const { lat, lon, display_name } = results[0];
-        const latNum = parseFloat(lat.toString());
-        const lonNum = parseFloat(lon.toString());
-        setCoordinates([latNum, lonNum]);
-        setDisplayAddress(display_name);
-        onAddressSelect?.(display_name, latNum, lonNum);
-        setError(null);
-      } else {
+  const geocodeAddress = useCallback(
+    async (searchAddress: string) => {
+      if (!searchAddress || searchAddress.length < 3) {
         setCoordinates(null);
-        setError('Location not found');
-        setDisplayAddress('');
+        setError(null);
+        setDisplayAddress("");
+        return;
       }
-    } catch (err) {
-      console.error('Geocoding error:', err);
-      setError('Unable to find location');
-      setCoordinates(null);
-      setDisplayAddress('');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [onAddressSelect]);
+
+      // Skip if same address
+      if (searchAddress === lastAddressRef.current) {
+        return;
+      }
+      lastAddressRef.current = searchAddress;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchAddress)}&limit=1`,
+          {
+            headers: {
+              Accept: "application/json",
+              "User-Agent": "Sentra-Scheduling-App",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Geocoding request failed");
+        }
+
+        const results: GeocodingResult[] = await response.json();
+
+        if (results.length > 0) {
+          const { lat, lon, display_name } = results[0];
+          const latNum = parseFloat(lat.toString());
+          const lonNum = parseFloat(lon.toString());
+          setCoordinates([latNum, lonNum]);
+          setDisplayAddress(display_name);
+          onAddressSelect?.(display_name, latNum, lonNum);
+          setError(null);
+        } else {
+          setCoordinates(null);
+          setError("Location not found");
+          setDisplayAddress("");
+        }
+      } catch (err) {
+        console.error("Geocoding error:", err);
+        setError("Unable to find location");
+        setCoordinates(null);
+        setDisplayAddress("");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [onAddressSelect],
+  );
 
   // Debounce address changes
   useEffect(() => {
@@ -171,11 +177,13 @@ export function MapPreview({
   // Map view
   if (coordinates) {
     return (
-      <div className={`rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 ${className}`}>
+      <div
+        className={`rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 ${className}`}
+      >
         <MapContainer
           center={coordinates}
           zoom={15}
-          style={{ height, width: '100%' }}
+          style={{ height, width: "100%" }}
           scrollWheelZoom={false}
           zoomControl={true}
         >
@@ -188,7 +196,10 @@ export function MapPreview({
         </MapContainer>
         {displayAddress && (
           <div className="px-3 py-2 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-            <p className="text-xs text-gray-600 dark:text-gray-400 truncate" title={displayAddress}>
+            <p
+              className="text-xs text-gray-600 dark:text-gray-400 truncate"
+              title={displayAddress}
+            >
               {displayAddress}
             </p>
           </div>

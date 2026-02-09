@@ -1,8 +1,14 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { SchedulingPreferences } from '../types';
-import { getDefaultPreferences } from '../utils/SchedulingUtils';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import { SchedulingPreferences } from "../types";
+import { getDefaultPreferences } from "../utils/SchedulingUtils";
 
-const STORAGE_KEY = 'sentra-scheduling-preferences';
+const STORAGE_KEY = "sentra-scheduling-preferences";
 
 interface SchedulingProviderProps {
   children: React.ReactNode;
@@ -33,11 +39,13 @@ interface StoredSchedulingData {
 
 export function SchedulingProvider({ children }: SchedulingProviderProps) {
   const [isOnboarded, setIsOnboarded] = useState<boolean>(false);
-  const [preferences, setPreferences] = useState<SchedulingPreferences>(getDefaultPreferences());
+  const [preferences, setPreferences] = useState<SchedulingPreferences>(
+    getDefaultPreferences(),
+  );
 
   // Load from localStorage on mount
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -45,41 +53,50 @@ export function SchedulingProvider({ children }: SchedulingProviderProps) {
         const data: StoredSchedulingData = JSON.parse(stored);
         setIsOnboarded(data.isOnboarded ?? false);
         if (data.preferences) {
-          setPreferences(prev => ({ ...prev, ...data.preferences }));
+          setPreferences((prev) => ({ ...prev, ...data.preferences }));
         }
       }
     } catch (e) {
-      console.error('Failed to load scheduling preferences:', e);
+      console.error("Failed to load scheduling preferences:", e);
     }
   }, []);
 
   // Persist to localStorage when state changes
-  const persistState = useCallback((onboarded: boolean, prefs: SchedulingPreferences) => {
-    if (typeof window === 'undefined') return;
+  const persistState = useCallback(
+    (onboarded: boolean, prefs: SchedulingPreferences) => {
+      if (typeof window === "undefined") return;
 
-    try {
-      const data: StoredSchedulingData = {
-        isOnboarded: onboarded,
-        preferences: prefs,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.error('Failed to save scheduling preferences:', e);
-    }
-  }, []);
+      try {
+        const data: StoredSchedulingData = {
+          isOnboarded: onboarded,
+          preferences: prefs,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.error("Failed to save scheduling preferences:", e);
+      }
+    },
+    [],
+  );
 
-  const updatePreferences = useCallback((updates: Partial<SchedulingPreferences>) => {
-    setPreferences(prev => {
-      const updated = { ...prev, ...updates };
-      persistState(isOnboarded, updated);
-      return updated;
-    });
-  }, [isOnboarded, persistState]);
+  const updatePreferences = useCallback(
+    (updates: Partial<SchedulingPreferences>) => {
+      setPreferences((prev) => {
+        const updated = { ...prev, ...updates };
+        persistState(isOnboarded, updated);
+        return updated;
+      });
+    },
+    [isOnboarded, persistState],
+  );
 
-  const handleSetOnboarded = useCallback((value: boolean) => {
-    setIsOnboarded(value);
-    persistState(value, preferences);
-  }, [preferences, persistState]);
+  const handleSetOnboarded = useCallback(
+    (value: boolean) => {
+      setIsOnboarded(value);
+      persistState(value, preferences);
+    },
+    [preferences, persistState],
+  );
 
   const resetToDefaults = useCallback(() => {
     const defaults = getDefaultPreferences();
@@ -107,7 +124,7 @@ export const useScheduling = (): SchedulingProviderState => {
   const context = useContext(SchedulingContext);
 
   if (context === undefined) {
-    throw new Error('useScheduling must be used within a SchedulingProvider');
+    throw new Error("useScheduling must be used within a SchedulingProvider");
   }
 
   return context;

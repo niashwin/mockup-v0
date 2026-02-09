@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   X,
   CheckCircle2,
@@ -14,14 +14,17 @@ import {
   Clock,
   Users,
   MessageSquare,
-  Sparkles
-} from 'lucide-react';
-import { useMeetingCapture } from './MeetingCaptureProvider';
+  Sparkles,
+} from "lucide-react";
+import { useMeetingCapture } from "./MeetingCaptureProvider";
 
 export const MeetingCaptureSummary: React.FC = () => {
-  const { currentCapture, showSummary, closeSummary, saveCapture } = useMeetingCapture();
+  const { currentCapture, showSummary, closeSummary, saveCapture } =
+    useMeetingCapture();
   const [showTranscript, setShowTranscript] = useState(false);
-  const [selectedSaveOption, setSelectedSaveOption] = useState<'meeting' | 'thread' | 'private' | null>(null);
+  const [selectedSaveOption, setSelectedSaveOption] = useState<
+    "meeting" | "thread" | "private" | null
+  >(null);
 
   if (!showSummary || !currentCapture) return null;
 
@@ -31,10 +34,10 @@ export const MeetingCaptureSummary: React.FC = () => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     if (mins < 1) return `${secs}s`;
-    return `${mins}m ${secs > 0 ? `${secs}s` : ''}`;
+    return `${mins}m ${secs > 0 ? `${secs}s` : ""}`;
   };
 
-  const handleSave = (option: 'meeting' | 'thread' | 'private') => {
+  const handleSave = (option: "meeting" | "thread" | "private") => {
     setSelectedSaveOption(option);
     // Slight delay for visual feedback
     setTimeout(() => {
@@ -55,19 +58,19 @@ export const MeetingCaptureSummary: React.FC = () => {
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="w-full max-w-2xl bg-white dark:bg-zinc-950 rounded-[2rem] shadow-2xl border border-white/20 dark:border-zinc-800 overflow-hidden flex flex-col max-h-[90vh]"
+          className="w-full max-w-2xl bg-card dark:bg-neutral-950 rounded-[2rem] shadow-2xl border border-white/20 dark:border-border overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <header className="px-8 pt-8 pb-6 flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-12 h-12 rounded-lg bg-accent/10 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-accent" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-                  {title || 'Meeting Captured'}
+                <h2 className="text-xl font-bold text-foreground">
+                  {title || "Meeting Captured"}
                 </h2>
-                <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {formatDuration(duration)}
@@ -83,7 +86,7 @@ export const MeetingCaptureSummary: React.FC = () => {
             </div>
             <button
               onClick={closeSummary}
-              className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 transition-colors"
+              className="p-2 rounded-full hover:bg-muted dark:hover:bg-neutral-800 text-muted-foreground hover:text-foreground transition-colors"
             >
               <X size={20} />
             </button>
@@ -93,8 +96,8 @@ export const MeetingCaptureSummary: React.FC = () => {
           <div className="flex-1 overflow-y-auto px-8 pb-8">
             {/* What Sentra Understood - THE KEY MOMENT */}
             <div className="mb-8">
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-blue-50/50 dark:from-emerald-900/20 dark:to-blue-900/10 border border-emerald-100 dark:border-emerald-900/30">
-                <p className="text-base text-zinc-800 dark:text-zinc-200 leading-relaxed">
+              <div className="p-5 rounded-lg bg-gradient-to-br from-accent/5 to-accent/[0.02] dark:from-accent/10 dark:to-accent/5 border border-accent/20">
+                <p className="text-base text-foreground leading-relaxed">
                   {snapshot.understanding}
                 </p>
               </div>
@@ -102,31 +105,32 @@ export const MeetingCaptureSummary: React.FC = () => {
 
             {/* What Entered Memory */}
             <div className="space-y-6">
-              <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 What Entered Memory
               </h3>
 
               {/* Decisions */}
               {snapshot.decisions.length > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <CheckCircle2 className="w-4 h-4 text-accent" />
                     <span>Decisions</span>
                   </div>
                   <div className="space-y-2 pl-6">
                     {snapshot.decisions.map((decision) => (
                       <div
                         key={decision.id}
-                        className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                        className="p-3 rounded-[7px] bg-background dark:bg-primary border border-border"
                       >
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                        <p className="text-sm text-foreground">
                           {decision.summary}
                         </p>
-                        {decision.participants && decision.participants.length > 0 && (
-                          <p className="text-xs text-zinc-400 mt-1">
-                            {decision.participants.join(', ')}
-                          </p>
-                        )}
+                        {decision.participants &&
+                          decision.participants.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {decision.participants.join(", ")}
+                            </p>
+                          )}
                       </div>
                     ))}
                   </div>
@@ -136,28 +140,32 @@ export const MeetingCaptureSummary: React.FC = () => {
               {/* Commitments */}
               {snapshot.commitments.length > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    <CircleDot className="w-4 h-4 text-blue-500" />
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <CircleDot className="w-4 h-4 text-accent" />
                     <span>Commitments</span>
                   </div>
                   <div className="space-y-2 pl-6">
                     {snapshot.commitments.map((commitment) => (
                       <div
                         key={commitment.id}
-                        className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                        className="p-3 rounded-[7px] bg-background dark:bg-primary border border-border"
                       >
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                        <p className="text-sm text-foreground">
                           {commitment.summary}
                         </p>
                         <div className="flex items-center gap-3 mt-1">
                           {commitment.owner && (
-                            <span className="text-xs text-zinc-500">
+                            <span className="text-xs text-muted-foreground">
                               {commitment.owner}
                             </span>
                           )}
                           {commitment.dueDate && (
-                            <span className="text-xs text-zinc-400">
-                              Due: {new Date(commitment.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            <span className="text-xs text-muted-foreground">
+                              Due:{" "}
+                              {new Date(commitment.dueDate).toLocaleDateString(
+                                "en-US",
+                                { month: "short", day: "numeric" },
+                              )}
                             </span>
                           )}
                         </div>
@@ -170,21 +178,21 @@ export const MeetingCaptureSummary: React.FC = () => {
               {/* Open Questions */}
               {snapshot.openQuestions.length > 0 && (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                    <HelpCircle className="w-4 h-4 text-amber-500" />
+                  <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <HelpCircle className="w-4 h-4 text-yellow-500" />
                     <span>Open Questions</span>
                   </div>
                   <div className="space-y-2 pl-6">
                     {snapshot.openQuestions.map((question) => (
                       <div
                         key={question.id}
-                        className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                        className="p-3 rounded-[7px] bg-background dark:bg-primary border border-border"
                       >
-                        <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                        <p className="text-sm text-foreground">
                           {question.summary}
                         </p>
                         {question.askedBy && (
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             Asked by {question.askedBy}
                           </p>
                         )}
@@ -200,7 +208,7 @@ export const MeetingCaptureSummary: React.FC = () => {
                   {snapshot.dominantTopics.map((topic, i) => (
                     <span
                       key={i}
-                      className="px-2.5 py-1 text-xs font-medium text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 rounded-full"
+                      className="px-2.5 py-1 text-xs font-medium text-muted-foreground bg-secondary rounded-full"
                     >
                       {topic}
                     </span>
@@ -210,10 +218,10 @@ export const MeetingCaptureSummary: React.FC = () => {
             </div>
 
             {/* Transcript (collapsed by default) */}
-            <div className="mt-8 pt-6 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="mt-8 pt-6 border-t border-border">
               <button
                 onClick={() => setShowTranscript(!showTranscript)}
-                className="flex items-center justify-between w-full text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                className="flex items-center justify-between w-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
@@ -230,7 +238,7 @@ export const MeetingCaptureSummary: React.FC = () => {
                 {showTranscript && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
@@ -238,20 +246,23 @@ export const MeetingCaptureSummary: React.FC = () => {
                       {transcript.map((segment) => (
                         <div key={segment.id} className="flex gap-3">
                           <div className="w-16 shrink-0 text-right">
-                            <span className="text-[10px] text-zinc-400">
-                              {new Date(segment.timestamp).toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit'
-                              })}
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(segment.timestamp).toLocaleTimeString(
+                                "en-US",
+                                {
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                },
+                              )}
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
                             {segment.speaker && (
-                              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                              <span className="text-xs font-medium text-muted-foreground">
                                 {segment.speaker}
                               </span>
                             )}
-                            <p className="text-sm text-zinc-700 dark:text-zinc-300 mt-0.5">
+                            <p className="text-sm text-foreground mt-0.5">
                               {segment.text}
                             </p>
                           </div>
@@ -265,49 +276,61 @@ export const MeetingCaptureSummary: React.FC = () => {
           </div>
 
           {/* Footer - What Happens Next */}
-          <footer className="px-8 py-6 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
-            <p className="text-xs font-medium text-zinc-500 uppercase tracking-wider mb-4">
+          <footer className="px-8 py-6 border-t border-border bg-background/50 dark:bg-neutral-900/50">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
               Save As
             </p>
             <div className="grid grid-cols-3 gap-3">
               <button
-                onClick={() => handleSave('meeting')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                  selectedSaveOption === 'meeting'
-                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20'
-                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                onClick={() => handleSave("meeting")}
+                className={`flex flex-col items-center gap-2 p-4 rounded-[7px] border-2 transition-all ${
+                  selectedSaveOption === "meeting"
+                    ? "border-accent bg-accent/10"
+                    : "border-border hover:border-border"
                 }`}
               >
-                <FileText className={`w-5 h-5 ${selectedSaveOption === 'meeting' ? 'text-emerald-600' : 'text-zinc-400'}`} />
-                <span className={`text-sm font-medium ${selectedSaveOption === 'meeting' ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-600 dark:text-zinc-400'}`}>
+                <FileText
+                  className={`w-5 h-5 ${selectedSaveOption === "meeting" ? "text-accent" : "text-muted-foreground"}`}
+                />
+                <span
+                  className={`text-sm font-medium ${selectedSaveOption === "meeting" ? "text-accent" : "text-muted-foreground"}`}
+                >
                   Meeting
                 </span>
               </button>
 
               <button
-                onClick={() => handleSave('thread')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                  selectedSaveOption === 'thread'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                onClick={() => handleSave("thread")}
+                className={`flex flex-col items-center gap-2 p-4 rounded-[7px] border-2 transition-all ${
+                  selectedSaveOption === "thread"
+                    ? "border-accent bg-accent/10"
+                    : "border-border hover:border-border"
                 }`}
               >
-                <Link2 className={`w-5 h-5 ${selectedSaveOption === 'thread' ? 'text-blue-600' : 'text-zinc-400'}`} />
-                <span className={`text-sm font-medium ${selectedSaveOption === 'thread' ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-600 dark:text-zinc-400'}`}>
+                <Link2
+                  className={`w-5 h-5 ${selectedSaveOption === "thread" ? "text-accent" : "text-muted-foreground"}`}
+                />
+                <span
+                  className={`text-sm font-medium ${selectedSaveOption === "thread" ? "text-accent" : "text-muted-foreground"}`}
+                >
                   Attach to Thread
                 </span>
               </button>
 
               <button
-                onClick={() => handleSave('private')}
-                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                  selectedSaveOption === 'private'
-                    ? 'border-zinc-500 bg-zinc-100 dark:bg-zinc-800'
-                    : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                onClick={() => handleSave("private")}
+                className={`flex flex-col items-center gap-2 p-4 rounded-[7px] border-2 transition-all ${
+                  selectedSaveOption === "private"
+                    ? "border-muted-foreground bg-muted dark:bg-neutral-800"
+                    : "border-border hover:border-border"
                 }`}
               >
-                <Lock className={`w-5 h-5 ${selectedSaveOption === 'private' ? 'text-zinc-600' : 'text-zinc-400'}`} />
-                <span className={`text-sm font-medium ${selectedSaveOption === 'private' ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-600 dark:text-zinc-400'}`}>
+                <Lock
+                  className={`w-5 h-5 ${selectedSaveOption === "private" ? "text-muted-foreground" : "text-muted-foreground"}`}
+                />
+                <span
+                  className={`text-sm font-medium ${selectedSaveOption === "private" ? "text-foreground" : "text-muted-foreground"}`}
+                >
                   Private
                 </span>
               </button>

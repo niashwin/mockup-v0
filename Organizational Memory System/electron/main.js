@@ -1,6 +1,13 @@
-const { app, BrowserWindow, ipcMain, screen, Notification, shell } = require('electron');
-const { exec } = require('child_process');
-const path = require('path');
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  screen,
+  Notification,
+  shell,
+} = require("electron");
+const { exec } = require("child_process");
+const path = require("path");
 
 let mainWindow;
 let pillWindow;
@@ -12,7 +19,7 @@ const MAIN_SIZES = {
 
 const getUrlWithParams = (baseUrl, params) => {
   const query = new URLSearchParams(params).toString();
-  return `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}${query}`;
+  return `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}${query}`;
 };
 
 const applyMainSize = (mode) => {
@@ -23,7 +30,7 @@ const applyMainSize = (mode) => {
     mainWindow.setSize(size.width, size.height, true);
     mainWindow.center();
   }
-  mainWindow.setResizable(mode !== 'compact');
+  mainWindow.setResizable(mode !== "compact");
 };
 
 const createMainWindow = (baseUrl, isDev) => {
@@ -31,23 +38,23 @@ const createMainWindow = (baseUrl, isDev) => {
     width: MAIN_SIZES.expanded.width,
     height: MAIN_SIZES.expanded.height,
     show: false,
-    backgroundColor: '#0b0b0b',
-    title: 'Sentra Organizational Memory System',
+    backgroundColor: "#0b0b0b",
+    title: "Sentra Organizational Memory System",
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
     },
   });
 
-  const mainUrl = getUrlWithParams(baseUrl, { mode: 'expanded' });
+  const mainUrl = getUrlWithParams(baseUrl, { mode: "expanded" });
   if (isDev) {
     mainWindow.loadURL(mainUrl);
-    mainWindow.webContents.openDevTools({ mode: 'detach' });
+    mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
     mainWindow.loadURL(mainUrl);
   }
 
-  mainWindow.on('close', (e) => {
+  mainWindow.on("close", (e) => {
     if (app.isQuitting) return;
     e.preventDefault();
     mainWindow.hide();
@@ -72,18 +79,18 @@ const createPillWindow = (baseUrl, isDev) => {
     movable: false,
     skipTaskbar: true,
     alwaysOnTop: true,
-    backgroundColor: '#00000000',
+    backgroundColor: "#00000000",
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
     },
   });
 
-  pillWindow.setAlwaysOnTop(true, 'floating');
+  pillWindow.setAlwaysOnTop(true, "floating");
   pillWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   pillWindow.setHasShadow(false);
 
-  const pillUrl = getUrlWithParams(baseUrl, { mode: 'pill', overlay: '1' });
+  const pillUrl = getUrlWithParams(baseUrl, { mode: "pill", overlay: "1" });
   if (isDev) {
     pillWindow.loadURL(pillUrl);
   } else {
@@ -94,12 +101,14 @@ const createPillWindow = (baseUrl, isDev) => {
 app.whenReady().then(() => {
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
   const isDev = Boolean(devServerUrl);
-  const baseUrl = devServerUrl || `file://${path.join(__dirname, '..', 'build', 'index.html')}`;
+  const baseUrl =
+    devServerUrl ||
+    `file://${path.join(__dirname, "..", "build", "index.html")}`;
 
   createMainWindow(baseUrl, isDev);
   createPillWindow(baseUrl, isDev);
 
-  app.on('activate', () => {
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createMainWindow(baseUrl, isDev);
       createPillWindow(baseUrl, isDev);
@@ -107,36 +116,36 @@ app.whenReady().then(() => {
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
     app.quit();
   }
 });
 
-ipcMain.on('open-main', (_, mode) => {
+ipcMain.on("open-main", (_, mode) => {
   if (!mainWindow) return;
   if (!mainWindow.isVisible()) {
     mainWindow.show();
   }
-  const nextMode = mode || 'expanded';
+  const nextMode = mode || "expanded";
   applyMainSize(nextMode);
-  mainWindow.webContents.send('set-mode', nextMode);
+  mainWindow.webContents.send("set-mode", nextMode);
   mainWindow.focus();
 });
 
-ipcMain.on('mode-changed', (_, mode) => {
+ipcMain.on("mode-changed", (_, mode) => {
   if (!mode) return;
   applyMainSize(mode);
 });
 
-ipcMain.on('hide-main', () => {
+ipcMain.on("hide-main", () => {
   if (!mainWindow) return;
   mainWindow.hide();
 });
 
-ipcMain.on('commit-meeting', (_, payload) => {
+ipcMain.on("commit-meeting", (_, payload) => {
   if (!mainWindow) return;
-  mainWindow.webContents.send('commit-meeting', payload);
+  mainWindow.webContents.send("commit-meeting", payload);
 });
 
 /**
@@ -145,21 +154,21 @@ ipcMain.on('commit-meeting', (_, payload) => {
  */
 const SOUND_MAP = {
   // Completion sounds
-  complete: 'Glass',      // Subtle, satisfying completion
-  celebrate: 'Hero',      // Celebratory for streaks/milestones
-  success: 'Blow',        // Quick success acknowledgment
+  complete: "Glass", // Subtle, satisfying completion
+  celebrate: "Hero", // Celebratory for streaks/milestones
+  success: "Blow", // Quick success acknowledgment
 
   // Action sounds
-  snooze: 'Submarine',    // Soft, indicates deferral
-  delegate: 'Morse',      // Indicates handoff
+  snooze: "Submarine", // Soft, indicates deferral
+  delegate: "Morse", // Indicates handoff
 
   // Alert sounds
-  warning: 'Basso',       // Low tone for warnings
-  error: 'Sosumi',        // Error indication
+  warning: "Basso", // Low tone for warnings
+  error: "Sosumi", // Error indication
 
   // Interaction sounds
-  tap: 'Tink',            // Light tap feedback
-  pop: 'Pop',             // UI pop/appear
+  tap: "Tink", // Light tap feedback
+  pop: "Pop", // UI pop/appear
 };
 
 /**
@@ -170,20 +179,20 @@ const SOUND_MAP = {
  * The audio cues serve as "audio haptics" - short, subtle sounds
  * that acknowledge user actions (Principle 7: Reward bias toward action)
  */
-ipcMain.on('trigger-haptic', (event, type) => {
-  if (process.platform !== 'darwin') return;
+ipcMain.on("trigger-haptic", (event, type) => {
+  if (process.platform !== "darwin") return;
 
   // Map haptic types to appropriate sounds
   const hapticSoundMap = {
-    light: 'Tink',
-    medium: 'Pop',
-    heavy: 'Blow',
-    success: 'Glass',
-    warning: 'Basso',
-    error: 'Sosumi',
+    light: "Tink",
+    medium: "Pop",
+    heavy: "Blow",
+    success: "Glass",
+    warning: "Basso",
+    error: "Sosumi",
   };
 
-  const soundName = hapticSoundMap[type] || 'Tink';
+  const soundName = hapticSoundMap[type] || "Tink";
   const soundPath = `/System/Library/Sounds/${soundName}.aiff`;
 
   // Play at reduced volume for subtle haptic-like feedback
@@ -202,8 +211,8 @@ ipcMain.on('trigger-haptic', (event, type) => {
  * Implements Principle 10: "Haptic/sound on completion"
  * Implements Principle 7: "Reward bias toward action"
  */
-ipcMain.on('play-sound', (event, soundId) => {
-  if (process.platform !== 'darwin') {
+ipcMain.on("play-sound", (event, soundId) => {
+  if (process.platform !== "darwin") {
     // Fallback for non-macOS: use system beep
     shell.beep();
     return;
@@ -222,11 +231,11 @@ ipcMain.on('play-sound', (event, soundId) => {
 });
 
 // Desktop notification handler
-ipcMain.on('show-notification', (event, { title, body }) => {
+ipcMain.on("show-notification", (event, { title, body }) => {
   if (Notification.isSupported()) {
     const notification = new Notification({
-      title: title || 'Sentra',
-      body: body || ''
+      title: title || "Sentra",
+      body: body || "",
     });
     notification.show();
   }

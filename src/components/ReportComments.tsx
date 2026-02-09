@@ -1,6 +1,17 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo, Children, cloneElement, isValidElement, type ReactNode, type ReactElement } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Pencil, MessageSquare } from 'lucide-react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+  Children,
+  cloneElement,
+  isValidElement,
+  type ReactNode,
+  type ReactElement,
+} from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { X, Pencil, MessageSquare } from "lucide-react";
 
 // Types
 export interface CommentHighlight {
@@ -30,7 +41,11 @@ function useTextSelection({
   enabled = true,
 }: {
   containerRef: React.RefObject<HTMLElement | null>;
-  onSelect: (selection: { text: string; startOffset: number; endOffset: number }) => void;
+  onSelect: (selection: {
+    text: string;
+    startOffset: number;
+    endOffset: number;
+  }) => void;
   enabled?: boolean;
 }): void {
   const enabledRef = useRef(enabled);
@@ -62,8 +77,8 @@ function useTextSelection({
   }, [containerRef, onSelect]);
 
   useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => document.removeEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => document.removeEventListener("mouseup", handleMouseUp);
   }, [handleMouseUp]);
 }
 
@@ -75,7 +90,7 @@ function processNode(
   activeId: string | null,
   onClick: (id: string) => void,
 ): { nodes: ReactNode; offset: number } {
-  if (node === null || node === undefined || typeof node === 'boolean') {
+  if (node === null || node === undefined || typeof node === "boolean") {
     return { nodes: node, offset: currentOffset };
   }
 
@@ -90,9 +105,11 @@ function processNode(
     return { nodes: processedChildren, offset };
   }
 
-  if (typeof node === 'string') {
+  if (typeof node === "string") {
     const endOffset = currentOffset + node.length;
-    const relevantRanges = ranges.filter(r => r.start < endOffset && r.end > currentOffset);
+    const relevantRanges = ranges.filter(
+      (r) => r.start < endOffset && r.end > currentOffset,
+    );
 
     if (relevantRanges.length === 0) {
       return { nodes: node, offset: endOffset };
@@ -119,8 +136,8 @@ function processNode(
             data-highlight-id={range.id}
             className={`cursor-pointer rounded-sm transition-colors ${
               isActive
-                ? 'bg-amber-300/60 dark:bg-amber-500/40'
-                : 'bg-amber-200/40 dark:bg-amber-600/20 hover:bg-amber-300/50 dark:hover:bg-amber-500/30'
+                ? "bg-amber-300/60 dark:bg-amber-500/40"
+                : "bg-amber-200/40 dark:bg-amber-600/20 hover:bg-amber-300/50 dark:hover:bg-amber-500/30"
             }`}
             onClick={(e) => {
               e.stopPropagation();
@@ -128,7 +145,7 @@ function processNode(
             }}
           >
             {highlightedText}
-          </span>
+          </span>,
         );
       }
       pos = relEnd;
@@ -141,7 +158,7 @@ function processNode(
     return { nodes: segments, offset: endOffset };
   }
 
-  if (typeof node === 'number') {
+  if (typeof node === "number") {
     return processNode(String(node), currentOffset, ranges, activeId, onClick);
   }
 
@@ -156,13 +173,23 @@ function processNode(
     let offset = currentOffset;
 
     for (let i = 0; i < childArray.length; i++) {
-      const result = processNode(childArray[i], offset, ranges, activeId, onClick);
+      const result = processNode(
+        childArray[i],
+        offset,
+        ranges,
+        activeId,
+        onClick,
+      );
       processedChildren.push(result.nodes);
       offset = result.offset;
     }
 
     return {
-      nodes: cloneElement(node as ReactElement, { ...(node.props as object) }, ...processedChildren),
+      nodes: cloneElement(
+        node as ReactElement,
+        { ...(node.props as object) },
+        ...processedChildren,
+      ),
       offset,
     };
   }
@@ -186,14 +213,20 @@ function HighlightRenderer({
       [...highlights]
         .sort((a, b) => a.startOffset - b.startOffset)
         .map((h) => ({ id: h.id, start: h.startOffset, end: h.endOffset })),
-    [highlights]
+    [highlights],
   );
 
   if (ranges.length === 0) {
     return <>{children}</>;
   }
 
-  const result = processNode(children, 0, ranges, activeHighlightId, onHighlightClick);
+  const result = processNode(
+    children,
+    0,
+    ranges,
+    activeHighlightId,
+    onHighlightClick,
+  );
   return <>{result.nodes}</>;
 }
 
@@ -213,16 +246,16 @@ function CommentCard({
   onDelete: (id: string) => void;
   style?: React.CSSProperties;
 }) {
-  const [mode, setMode] = useState<'view' | 'edit' | 'delete'>('view');
-  const [editText, setEditText] = useState('');
+  const [mode, setMode] = useState<"view" | "edit" | "delete">("view");
+  const [editText, setEditText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (!isActive) setMode('view');
+    if (!isActive) setMode("view");
   }, [isActive]);
 
   useEffect(() => {
-    if (mode === 'edit' && textareaRef.current) {
+    if (mode === "edit" && textareaRef.current) {
       textareaRef.current.focus();
       textareaRef.current.select();
     }
@@ -232,15 +265,15 @@ function CommentCard({
 
   const startEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setEditText(highlight.comment?.text ?? '');
-    setMode('edit');
+    setEditText(highlight.comment?.text ?? "");
+    setMode("edit");
   };
 
   const saveEdit = () => {
     if (editText.trim()) {
       onEdit(highlight.id, editText.trim());
     }
-    setMode('view');
+    setMode("view");
   };
 
   return (
@@ -249,21 +282,24 @@ function CommentCard({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       style={style}
-      className={`group absolute left-0 w-48 p-2.5 rounded-lg cursor-pointer bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 shadow-sm transition-shadow hover:shadow-md ${
-        isActive ? 'ring-1 ring-amber-400' : ''
+      className={`group absolute left-0 w-48 p-2.5 rounded-[7px] cursor-pointer bg-card dark:bg-neutral-800 border border-border shadow-sm transition-shadow hover:shadow-md ${
+        isActive ? "ring-1 ring-amber-400" : ""
       }`}
     >
-      {mode === 'view' && (
+      {mode === "view" && (
         <div className="absolute top-1.5 right-1.5 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={startEdit}
-            className="p-1 rounded text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-600"
+            className="p-1 rounded text-muted-foreground hover:bg-muted dark:hover:bg-neutral-800 hover:text-foreground"
           >
             <Pencil className="w-3 h-3" />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); setMode('delete'); }}
-            className="p-1 rounded text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 hover:text-zinc-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              setMode("delete");
+            }}
+            className="p-1 rounded text-muted-foreground hover:bg-muted dark:hover:bg-neutral-800 hover:text-foreground"
           >
             <X className="w-3 h-3" />
           </button>
@@ -271,61 +307,73 @@ function CommentCard({
       )}
 
       <div className="flex items-center gap-1.5 mb-1.5">
-        <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+        <div className="w-5 h-5 rounded-full bg-accent/10 flex items-center justify-center text-[9px] font-bold text-accent">
           {highlight.comment.userName.charAt(0)}
         </div>
-        <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-300 truncate">
+        <span className="text-[11px] font-medium text-foreground truncate">
           {highlight.comment.userName}
         </span>
       </div>
 
-      {mode === 'edit' ? (
+      {mode === "edit" ? (
         <div className="space-y-1.5">
           <textarea
             ref={textareaRef}
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Escape') setMode('view');
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) saveEdit();
+              if (e.key === "Escape") setMode("view");
+              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) saveEdit();
             }}
             rows={2}
-            className="w-full resize-none rounded border border-zinc-200 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900 px-2 py-1 text-[11px] focus:outline-none focus:border-emerald-500"
+            className="w-full resize-none rounded border border-border bg-background dark:bg-primary px-2 py-1 text-[11px] focus:outline-none focus:border-accent"
           />
           <div className="flex justify-end gap-1">
-            <button onClick={() => setMode('view')} className="px-2 py-0.5 text-[10px] text-zinc-500 hover:text-zinc-700">
+            <button
+              onClick={() => setMode("view")}
+              className="px-2 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+            >
               Cancel
             </button>
-            <button onClick={saveEdit} className="px-2 py-0.5 text-[10px] bg-emerald-500 text-white rounded">
+            <button
+              onClick={saveEdit}
+              className="px-2 py-0.5 text-[10px] bg-accent text-white rounded"
+            >
               Save
             </button>
           </div>
         </div>
       ) : (
-        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-3">
+        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
           {highlight.comment.text}
         </p>
       )}
 
       <AnimatePresence>
-        {mode === 'delete' && (
+        {mode === "delete" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-zinc-900/90 rounded-lg flex flex-col items-center justify-center gap-2 p-2"
+            className="absolute inset-0 bg-primary/90 rounded-[7px] flex flex-col items-center justify-center gap-2 p-2"
           >
             <p className="text-[11px] font-medium text-white">Delete?</p>
             <div className="flex gap-1.5">
               <button
-                onClick={(e) => { e.stopPropagation(); onDelete(highlight.id); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(highlight.id);
+                }}
                 className="px-2 py-1 text-[10px] font-medium bg-red-500 text-white rounded"
               >
                 Delete
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); setMode('view'); }}
-                className="px-2 py-1 text-[10px] font-medium bg-zinc-700 text-white rounded"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMode("view");
+                }}
+                className="px-2 py-1 text-[10px] font-medium bg-neutral-800 text-white rounded"
               >
                 Cancel
               </button>
@@ -347,7 +395,7 @@ function CommentComposer({
   onSubmit: (text: string) => void;
   onCancel: () => void;
 }) {
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -368,7 +416,9 @@ function CommentComposer({
       className="p-3 space-y-2"
     >
       <div className="bg-amber-50 dark:bg-amber-900/20 rounded p-2 border-l-2 border-amber-400">
-        <p className="text-[11px] text-zinc-600 dark:text-zinc-400 line-clamp-2">"{selectedText}"</p>
+        <p className="text-[11px] text-muted-foreground line-clamp-2">
+          "{selectedText}"
+        </p>
       </div>
 
       <textarea
@@ -376,22 +426,25 @@ function CommentComposer({
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') onCancel();
-          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleSubmit();
+          if (e.key === "Escape") onCancel();
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit();
         }}
         placeholder="Add a comment..."
         rows={2}
-        className="w-full resize-none rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs placeholder:text-zinc-400 focus:outline-none focus:border-emerald-500"
+        className="w-full resize-none rounded-[7px] border border-border bg-card dark:bg-neutral-800 px-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:border-accent"
       />
 
       <div className="flex justify-end gap-1.5">
-        <button onClick={onCancel} className="px-2.5 py-1 text-[11px] text-zinc-500 hover:text-zinc-700">
+        <button
+          onClick={onCancel}
+          className="px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+        >
           Cancel
         </button>
         <button
           onClick={handleSubmit}
           disabled={!text.trim()}
-          className="px-3 py-1 text-[11px] font-medium bg-emerald-500 text-white rounded-lg disabled:opacity-50"
+          className="px-3 py-1 text-[11px] font-medium bg-accent text-white rounded-[7px] disabled:opacity-50"
         >
           Comment
         </button>
@@ -421,8 +474,14 @@ export function HighlightedContent({
   setActiveHighlight: (id: string | null) => void;
   className?: string;
   contentRef?: React.RefObject<HTMLDivElement | null>;
-  pendingSelection: { text: string; startOffset: number; endOffset: number } | null;
-  setPendingSelection: (sel: { text: string; startOffset: number; endOffset: number } | null) => void;
+  pendingSelection: {
+    text: string;
+    startOffset: number;
+    endOffset: number;
+  } | null;
+  setPendingSelection: (
+    sel: { text: string; startOffset: number; endOffset: number } | null,
+  ) => void;
   isComposerOpen: boolean;
   setIsComposerOpen: (open: boolean) => void;
 }) {
@@ -431,7 +490,7 @@ export function HighlightedContent({
 
   const reportHighlights = useMemo(
     () => highlights.filter((h) => h.reportId === reportId),
-    [highlights, reportId]
+    [highlights, reportId],
   );
 
   const handleSelect = useCallback(
@@ -439,7 +498,7 @@ export function HighlightedContent({
       setPendingSelection(selection);
       setIsComposerOpen(true);
     },
-    [setPendingSelection, setIsComposerOpen]
+    [setPendingSelection, setIsComposerOpen],
   );
 
   useTextSelection({
@@ -451,15 +510,19 @@ export function HighlightedContent({
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('[data-highlight-id]')) {
+      if (!target.closest("[data-highlight-id]")) {
         setActiveHighlight(null);
       }
     },
-    [setActiveHighlight]
+    [setActiveHighlight],
   );
 
   return (
-    <div ref={containerRef as React.RefObject<HTMLDivElement>} onClick={handleClick} className={className}>
+    <div
+      ref={containerRef as React.RefObject<HTMLDivElement>}
+      onClick={handleClick}
+      className={className}
+    >
       <HighlightRenderer
         highlights={reportHighlights}
         activeHighlightId={activeHighlightId}
@@ -495,7 +558,7 @@ export function CommentLayer({
 
   const reportHighlights = useMemo(
     () => highlights.filter((h) => h.reportId === reportId),
-    [highlights, reportId]
+    [highlights, reportId],
   );
 
   const updatePositions = useCallback(() => {
@@ -518,11 +581,17 @@ export function CommentLayer({
 
           if (currentOffset + nodeLength > highlight.startOffset && !range) {
             range = document.createRange();
-            range.setStart(node, Math.max(0, highlight.startOffset - currentOffset));
+            range.setStart(
+              node,
+              Math.max(0, highlight.startOffset - currentOffset),
+            );
           }
 
           if (range && currentOffset + nodeLength >= highlight.endOffset) {
-            range.setEnd(node, Math.min(highlight.endOffset - currentOffset, nodeLength));
+            range.setEnd(
+              node,
+              Math.min(highlight.endOffset - currentOffset, nodeLength),
+            );
             break;
           }
 
@@ -531,18 +600,24 @@ export function CommentLayer({
 
         if (range) {
           const rect = range.getBoundingClientRect();
-          newPositions.push({ id: highlight.id, top: rect.top - ancestorRect.top });
+          newPositions.push({
+            id: highlight.id,
+            top: rect.top - ancestorRect.top,
+          });
         }
       }
 
       // Avoid overlapping
       const sorted = [...newPositions].sort((a, b) => a.top - b.top);
       const minGap = 90;
-      const adjusted = sorted.reduce<{ id: string; top: number }[]>((acc, pos, i) => {
-        if (i === 0) return [pos];
-        const prevBottom = acc[i - 1].top + minGap;
-        return [...acc, { ...pos, top: Math.max(pos.top, prevBottom) }];
-      }, []);
+      const adjusted = sorted.reduce<{ id: string; top: number }[]>(
+        (acc, pos, i) => {
+          if (i === 0) return [pos];
+          const prevBottom = acc[i - 1].top + minGap;
+          return [...acc, { ...pos, top: Math.max(pos.top, prevBottom) }];
+        },
+        [],
+      );
 
       setPositions(adjusted);
     });
@@ -553,8 +628,8 @@ export function CommentLayer({
   }, [updatePositions]);
 
   useEffect(() => {
-    window.addEventListener('resize', updatePositions);
-    return () => window.removeEventListener('resize', updatePositions);
+    window.addEventListener("resize", updatePositions);
+    return () => window.removeEventListener("resize", updatePositions);
   }, [updatePositions]);
 
   if (reportHighlights.length === 0) return null;
@@ -593,7 +668,11 @@ export function CommentPanel({
   onClose,
 }: {
   isOpen: boolean;
-  pendingSelection: { text: string; startOffset: number; endOffset: number } | null;
+  pendingSelection: {
+    text: string;
+    startOffset: number;
+    endOffset: number;
+  } | null;
   onSubmit: (text: string) => void;
   onClose: () => void;
 }) {
@@ -609,12 +688,12 @@ export function CommentPanel({
     };
 
     const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
 
@@ -626,13 +705,15 @@ export function CommentPanel({
           initial={{ width: 0, opacity: 0 }}
           animate={{ width: 280, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
-          transition={{ type: 'spring', duration: 0.3, bounce: 0 }}
-          className="shrink-0 border-l border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 overflow-hidden"
+          transition={{ type: "spring", duration: 0.3, bounce: 0 }}
+          className="shrink-0 border-l border-border bg-background dark:bg-primary overflow-hidden"
         >
           <div className="w-[280px]">
-            <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-zinc-400" />
-              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Add Comment</span>
+            <div className="p-3 border-b border-border flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-muted-foreground" />
+              <span className="text-xs font-medium text-muted-foreground">
+                Add Comment
+              </span>
             </div>
             <CommentComposer
               selectedText={pendingSelection.text}

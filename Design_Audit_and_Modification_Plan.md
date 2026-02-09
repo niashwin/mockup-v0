@@ -11,6 +11,7 @@
 This document audits the current Sentra mockup against the 10 Product Principles and provides a detailed modification plan. The current implementation has strong foundations but diverges significantly from the principles in several key areas—particularly around **single-focus attention**, **card structure consistency**, **memory-justified elevation**, and **action primitives**.
 
 ### Priority Classification
+
 - **P0 (Critical):** Fundamental principle violations that must be fixed
 - **P1 (High):** Important changes that significantly improve alignment
 - **P2 (Medium):** Refinements that enhance the experience
@@ -22,7 +23,7 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 ### 1. Single-Focus Attention
 
-> *"At any moment, only one thing should occupy the user's full attention. When you click into something, it takes center stage. No 2/3-1/3 splits that divide cognitive load."*
+> _"At any moment, only one thing should occupy the user's full attention. When you click into something, it takes center stage. No 2/3-1/3 splits that divide cognitive load."_
 
 #### Current State: ❌ VIOLATION
 
@@ -43,18 +44,18 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P0):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 1.1 | Redesign NowScreen as **single-column, full-width** layout. The attention pane (cards) should be the primary view. Memory bubbles become a secondary/exploration mode accessed via explicit toggle. | `NowScreen.tsx`, `App.tsx` |
-| 1.2 | When clicking into any card (alert, commitment, meeting), it should **expand to full-screen focus mode** with previous context sliding away completely | `NowScreen.tsx`, new `FocusView.tsx` |
-| 1.3 | Implement **modal takeover pattern**: when drilling into any item, it takes 100% of the viewport with clear "back" affordance | All detail panels |
-| 1.4 | Remove simultaneous display of Meeting + Alerts + Commitments. Show **one primary attention stream** that users scroll through | `NowScreen.tsx` |
+| Change ID | Description                                                                                                                                                                                         | Files Affected                       |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| 1.1       | Redesign NowScreen as **single-column, full-width** layout. The attention pane (cards) should be the primary view. Memory bubbles become a secondary/exploration mode accessed via explicit toggle. | `NowScreen.tsx`, `App.tsx`           |
+| 1.2       | When clicking into any card (alert, commitment, meeting), it should **expand to full-screen focus mode** with previous context sliding away completely                                              | `NowScreen.tsx`, new `FocusView.tsx` |
+| 1.3       | Implement **modal takeover pattern**: when drilling into any item, it takes 100% of the viewport with clear "back" affordance                                                                       | All detail panels                    |
+| 1.4       | Remove simultaneous display of Meeting + Alerts + Commitments. Show **one primary attention stream** that users scroll through                                                                      | `NowScreen.tsx`                      |
 
 ---
 
 ### 2. Only Surface What Demands Intervention
 
-> *"Two categories belong in the attention pane: (1) Needs your attention: A risk or issue that could go wrong, (2) Needs your decision: Something blocked until you weigh in. Status updates, completed jobs, 'things going well'—none of these belong in prime real estate."*
+> _"Two categories belong in the attention pane: (1) Needs your attention: A risk or issue that could go wrong, (2) Needs your decision: Something blocked until you weigh in. Status updates, completed jobs, 'things going well'—none of these belong in prime real estate."_
 
 #### Current State: ⚠️ PARTIAL VIOLATION
 
@@ -78,18 +79,18 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P0):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 2.1 | Create **strict filter** for attention pane: only show items where `needsIntervention: true` or `needsDecision: true` | `data.ts`, new `AttentionFilter.ts` |
-| 2.2 | Remove "info" severity from attention pane. Info-level items go to exploration/search only | `Alert_Center.md`, `types.ts` |
-| 2.3 | Add `requiresAction: boolean` field to MeetingBrief. Only show meetings in attention pane where user has prep tasks or pending decisions | `types.ts`, meeting components |
-| 2.4 | Rename "Memory Stream" to "Exploration" or similar. It's not the attention pane—it's for discovery | `MemoryBubblesEnhanced.tsx` |
+| Change ID | Description                                                                                                                              | Files Affected                      |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 2.1       | Create **strict filter** for attention pane: only show items where `needsIntervention: true` or `needsDecision: true`                    | `data.ts`, new `AttentionFilter.ts` |
+| 2.2       | Remove "info" severity from attention pane. Info-level items go to exploration/search only                                               | `Alert_Center.md`, `types.ts`       |
+| 2.3       | Add `requiresAction: boolean` field to MeetingBrief. Only show meetings in attention pane where user has prep tasks or pending decisions | `types.ts`, meeting components      |
+| 2.4       | Rename "Memory Stream" to "Exploration" or similar. It's not the attention pane—it's for discovery                                       | `MemoryBubblesEnhanced.tsx`         |
 
 ---
 
 ### 3. Weight by Probability × Impact
 
-> *"Before surfacing anything, the system must answer: If this isn't addressed, what's the (qualitative) probability something goes wrong? And how severe would that be? High-high gets prioritized. Low-anything gets filtered out."*
+> _"Before surfacing anything, the system must answer: If this isn't addressed, what's the (qualitative) probability something goes wrong? And how severe would that be? High-high gets prioritized. Low-anything gets filtered out."_
 
 #### Current State: ❌ VIOLATION
 
@@ -111,18 +112,18 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P1):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 3.1 | Add `probability: 'high' \| 'medium' \| 'low'` and `impact: 'high' \| 'medium' \| 'low'` to all attention-worthy entities | `types.ts` |
-| 3.2 | Create `AttentionScore` utility: `score = probabilityWeight × impactWeight`. Filter out `score < threshold` | New `AttentionScore.ts` |
-| 3.3 | Sort attention pane by score descending, not by type or time | `NowScreen.tsx` |
-| 3.4 | Display probability/impact reasoning (used in Principle 8) but don't clutter with raw scores | Card components |
+| Change ID | Description                                                                                                               | Files Affected          |
+| --------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 3.1       | Add `probability: 'high' \| 'medium' \| 'low'` and `impact: 'high' \| 'medium' \| 'low'` to all attention-worthy entities | `types.ts`              |
+| 3.2       | Create `AttentionScore` utility: `score = probabilityWeight × impactWeight`. Filter out `score < threshold`               | New `AttentionScore.ts` |
+| 3.3       | Sort attention pane by score descending, not by type or time                                                              | `NowScreen.tsx`         |
+| 3.4       | Display probability/impact reasoning (used in Principle 8) but don't clutter with raw scores                              | Card components         |
 
 ---
 
 ### 4. Trusted by Default, Verify When Needed
 
-> *"No inline citations cluttering every sentence or artifact. Users should trust the synthesis. But if they want to drill into source material, it's one click away."*
+> _"No inline citations cluttering every sentence or artifact. Users should trust the synthesis. But if they want to drill into source material, it's one click away."_
 
 #### Current State: ⚠️ PARTIAL VIOLATION
 
@@ -142,18 +143,18 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P1):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 4.1 | Hide evidence/source links by default. Show only on hover or via "Sources" expandable section | All card components |
-| 4.2 | Replace inline evidence with subtle "verified" indicator (small icon) that expands on click | `AlertItem`, `CommitmentItem`, etc. |
-| 4.3 | Create `SourceDrawer` component: slides in from right with full source material when user wants to verify | New `SourceDrawer.tsx` |
-| 4.4 | Keep source data in model but don't render until explicitly requested | Card components |
+| Change ID | Description                                                                                               | Files Affected                      |
+| --------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 4.1       | Hide evidence/source links by default. Show only on hover or via "Sources" expandable section             | All card components                 |
+| 4.2       | Replace inline evidence with subtle "verified" indicator (small icon) that expands on click               | `AlertItem`, `CommitmentItem`, etc. |
+| 4.3       | Create `SourceDrawer` component: slides in from right with full source material when user wants to verify | New `SourceDrawer.tsx`              |
+| 4.4       | Keep source data in model but don't render until explicitly requested                                     | Card components                     |
 
 ---
 
 ### 5. Every Card Earns Its Real Estate
 
-> *"A card is a fixed mental unit—consistent length, consistent structure. Five lines of context, a 'why' line (using memory to explain the rationale), and suggested actions."*
+> _"A card is a fixed mental unit—consistent length, consistent structure. Five lines of context, a 'why' line (using memory to explain the rationale), and suggested actions."_
 
 #### Current State: ❌ VIOLATION
 
@@ -181,13 +182,13 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P0):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 5.1 | Create **unified `AttentionCard` component** with fixed structure | New `AttentionCard.tsx` |
-| 5.2 | Card structure must be:<br>• Line 1: Category badge + timestamp<br>• Lines 2-3: Title (max 2 lines)<br>• Lines 4-5: Context (max 2 lines)<br>• Line 6: **WHY line** (memory-justified)<br>• Line 7: Actions row | `AttentionCard.tsx` |
-| 5.3 | Add `why: string` field to all attention entities, populated by memory reasoning | `types.ts`, data layer |
-| 5.4 | Standardize action vocabulary across all card types (see Principle 6) | All card components |
-| 5.5 | Enforce max character counts in rendering, truncate with "..." | `AttentionCard.tsx` |
+| Change ID | Description                                                                                                                                                                                                     | Files Affected          |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| 5.1       | Create **unified `AttentionCard` component** with fixed structure                                                                                                                                               | New `AttentionCard.tsx` |
+| 5.2       | Card structure must be:<br>• Line 1: Category badge + timestamp<br>• Lines 2-3: Title (max 2 lines)<br>• Lines 4-5: Context (max 2 lines)<br>• Line 6: **WHY line** (memory-justified)<br>• Line 7: Actions row | `AttentionCard.tsx`     |
+| 5.3       | Add `why: string` field to all attention entities, populated by memory reasoning                                                                                                                                | `types.ts`, data layer  |
+| 5.4       | Standardize action vocabulary across all card types (see Principle 6)                                                                                                                                           | All card components     |
+| 5.5       | Enforce max character counts in rendering, truncate with "..."                                                                                                                                                  | `AttentionCard.tsx`     |
 
 **Card Structure Template:**
 
@@ -211,7 +212,7 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 ### 6. Actions Are Primitives, Not Features
 
-> *"Three types: Context (view source, see thread), Execute (draft response, schedule meeting—completed in-product, deep-linked), Collaborate (bring someone else in, they see what you see)"*
+> _"Three types: Context (view source, see thread), Execute (draft response, schedule meeting—completed in-product, deep-linked), Collaborate (bring someone else in, they see what you see)"_
 
 #### Current State: ⚠️ PARTIAL COMPLIANCE
 
@@ -233,18 +234,18 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P0):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 6.1 | Define action taxonomy:<br>• **Context**: View Source, See Thread, Show History<br>• **Execute**: Draft Email, Schedule Meeting, Create Task, Send Slack<br>• **Collaborate**: Share Card, Assign to Person, Add Watcher | New `ActionPrimitives.ts` |
-| 6.2 | Implement deep-linking for Execute actions. Draft Email → opens mailto: with pre-filled subject/body. Schedule Meeting → opens calendar with pre-filled details | Action handlers |
-| 6.3 | Build `ShareCard` flow: generates link, recipient sees exact same card context | New `CardSharing.tsx` |
-| 6.4 | Actions should render as icon buttons with consistent styling:<br>• Context: Grey icons<br>• Execute: Primary/Blue icons<br>• Collaborate: Green icons | Action components |
+| Change ID | Description                                                                                                                                                                                                              | Files Affected            |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------- |
+| 6.1       | Define action taxonomy:<br>• **Context**: View Source, See Thread, Show History<br>• **Execute**: Draft Email, Schedule Meeting, Create Task, Send Slack<br>• **Collaborate**: Share Card, Assign to Person, Add Watcher | New `ActionPrimitives.ts` |
+| 6.2       | Implement deep-linking for Execute actions. Draft Email → opens mailto: with pre-filled subject/body. Schedule Meeting → opens calendar with pre-filled details                                                          | Action handlers           |
+| 6.3       | Build `ShareCard` flow: generates link, recipient sees exact same card context                                                                                                                                           | New `CardSharing.tsx`     |
+| 6.4       | Actions should render as icon buttons with consistent styling:<br>• Context: Grey icons<br>• Execute: Primary/Blue icons<br>• Collaborate: Green icons                                                                   | Action components         |
 
 ---
 
 ### 7. Reward Bias Toward Action
 
-> *"Don't gate satisfaction on full resolution. Taking a step forward is the win. Small actions get acknowledged—motion produces information."*
+> _"Don't gate satisfaction on full resolution. Taking a step forward is the win. Small actions get acknowledged—motion produces information."_
 
 #### Current State: ⚠️ PARTIAL COMPLIANCE
 
@@ -270,18 +271,18 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P2):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 7.1 | Add celebratory feedback for ALL actions, not just complete:<br>• Snooze: "Smart move. We'll remind you."<br>• Delegate: "Passed the baton. They're on it."<br>• Draft: "Words are half the battle." | Toast messages, action handlers |
-| 7.2 | Implement **operator quotes** on significant completions. Curated list of motivational quotes from real operators | New `OperatorQuotes.ts` |
-| 7.3 | Add haptic feedback (via Electron API) on action completion | Action handlers |
-| 7.4 | Consider subtle sound effects on completion (optional, toggle in settings) | Settings, action handlers |
+| Change ID | Description                                                                                                                                                                                          | Files Affected                  |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| 7.1       | Add celebratory feedback for ALL actions, not just complete:<br>• Snooze: "Smart move. We'll remind you."<br>• Delegate: "Passed the baton. They're on it."<br>• Draft: "Words are half the battle." | Toast messages, action handlers |
+| 7.2       | Implement **operator quotes** on significant completions. Curated list of motivational quotes from real operators                                                                                    | New `OperatorQuotes.ts`         |
+| 7.3       | Add haptic feedback (via Electron API) on action completion                                                                                                                                          | Action handlers                 |
+| 7.4       | Consider subtle sound effects on completion (optional, toggle in settings)                                                                                                                           | Settings, action handlers       |
 
 ---
 
 ### 8. Memory Justifies Elevation
 
-> *"When something surfaces in the attention pane, there should be a 'why' grounded in memory. 'Flagging this because you're closing Series A and this term sheet expires in 15 days.'"*
+> _"When something surfaces in the attention pane, there should be a 'why' grounded in memory. 'Flagging this because you're closing Series A and this term sheet expires in 15 days.'"_
 
 #### Current State: ❌ VIOLATION
 
@@ -302,18 +303,18 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P0):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 8.1 | Add `memoryRationale: string` field to all attention entities | `types.ts` |
-| 8.2 | Display "why" prominently on every card. Format: "💡 Flagging because [memory-grounded reason]" | `AttentionCard.tsx` |
-| 8.3 | Generate sample "why" statements for mock data:<br>• "Flagging because you discussed this in 3 meetings without resolution"<br>• "Flagging because Marcus mentioned this is a blocker for Q3"<br>• "Flagging because similar issues caused problems last quarter" | `data.ts` |
-| 8.4 | "Why" should reference: temporal context, related entities, past patterns, user priorities | Data model |
+| Change ID | Description                                                                                                                                                                                                                                                       | Files Affected      |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| 8.1       | Add `memoryRationale: string` field to all attention entities                                                                                                                                                                                                     | `types.ts`          |
+| 8.2       | Display "why" prominently on every card. Format: "💡 Flagging because [memory-grounded reason]"                                                                                                                                                                   | `AttentionCard.tsx` |
+| 8.3       | Generate sample "why" statements for mock data:<br>• "Flagging because you discussed this in 3 meetings without resolution"<br>• "Flagging because Marcus mentioned this is a blocker for Q3"<br>• "Flagging because similar issues caused problems last quarter" | `data.ts`           |
+| 8.4       | "Why" should reference: temporal context, related entities, past patterns, user priorities                                                                                                                                                                        | Data model          |
 
 ---
 
 ### 9. Cards Persist Context Through Collaboration
 
-> *"When Ashwin joins a card, he sees what you see. The conversation happens inside the card. When resolved, the card dissolves—but memory retains everything."*
+> _"When Ashwin joins a card, he sees what you see. The conversation happens inside the card. When resolved, the card dissolves—but memory retains everything."_
 
 #### Current State: ❌ NOT IMPLEMENTED
 
@@ -333,19 +334,19 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P1):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 9.1 | Add `collaborators: string[]` field to cards | `types.ts` |
-| 9.2 | Build **card sharing UI**: "Add Ashwin to this card" → Ashwin sees identical card in their attention pane | New `CardCollaboration.tsx` |
-| 9.3 | Add **in-card comment thread**. Simple linear discussion that lives on the card | `AttentionCard.tsx`, new `CardThread.tsx` |
-| 9.4 | On card resolution, show: "Resolved. Memory captured. We'll resurface if needed." | Resolution flow |
-| 9.5 | Store resolution context in memory: who resolved, when, what was the outcome | Data layer |
+| Change ID | Description                                                                                               | Files Affected                            |
+| --------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| 9.1       | Add `collaborators: string[]` field to cards                                                              | `types.ts`                                |
+| 9.2       | Build **card sharing UI**: "Add Ashwin to this card" → Ashwin sees identical card in their attention pane | New `CardCollaboration.tsx`               |
+| 9.3       | Add **in-card comment thread**. Simple linear discussion that lives on the card                           | `AttentionCard.tsx`, new `CardThread.tsx` |
+| 9.4       | On card resolution, show: "Resolved. Memory captured. We'll resurface if needed."                         | Resolution flow                           |
+| 9.5       | Store resolution context in memory: who resolved, when, what was the outcome                              | Data layer                                |
 
 ---
 
 ### 10. Delight Through Restraint
 
-> *"Clean > cluttered. More shadow on cards so they pop. Blue hues aligned with brand. Dynamic wallpaper tied to time of day. Haptic/sound on completion."*
+> _"Clean > cluttered. More shadow on cards so they pop. Blue hues aligned with brand. Dynamic wallpaper tied to time of day. Haptic/sound on completion."_
 
 #### Current State: ⚠️ PARTIAL COMPLIANCE
 
@@ -374,14 +375,14 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 #### Required Changes (P2):
 
-| Change ID | Description | Files Affected |
-|-----------|-------------|----------------|
-| 10.1 | Increase card elevation: `shadow-lg` or custom shadow with more depth | Card components, `index.css` |
-| 10.2 | Implement **dynamic wallpaper**: morning (warm), day (bright), evening (cool), night (dark). Gradients shift based on system time | `App.tsx`, new `DynamicBackground.tsx` |
-| 10.3 | Add haptic feedback via Electron: light tap on actions, stronger on completion | `electron/main.js`, action handlers |
-| 10.4 | Add optional completion sounds: subtle, professional. Toggle in settings | Settings, action handlers |
-| 10.5 | Audit color usage: reduce amber/emerald, increase blue spectrum for brand alignment | `index.css`, all components |
-| 10.6 | Implement **operator quotes** on completion (also in Principle 7) | `OperatorQuotes.ts` |
+| Change ID | Description                                                                                                                       | Files Affected                         |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 10.1      | Increase card elevation: `shadow-lg` or custom shadow with more depth                                                             | Card components, `index.css`           |
+| 10.2      | Implement **dynamic wallpaper**: morning (warm), day (bright), evening (cool), night (dark). Gradients shift based on system time | `App.tsx`, new `DynamicBackground.tsx` |
+| 10.3      | Add haptic feedback via Electron: light tap on actions, stronger on completion                                                    | `electron/main.js`, action handlers    |
+| 10.4      | Add optional completion sounds: subtle, professional. Toggle in settings                                                          | Settings, action handlers              |
+| 10.5      | Audit color usage: reduce amber/emerald, increase blue spectrum for brand alignment                                               | `index.css`, all components            |
+| 10.6      | Implement **operator quotes** on completion (also in Principle 7)                                                                 | `OperatorQuotes.ts`                    |
 
 ---
 
@@ -452,38 +453,38 @@ This document audits the current Sentra mockup against the 10 Product Principles
 
 ### New Files to Create
 
-| File | Purpose |
-|------|---------|
-| `AttentionCard.tsx` | Unified card component with standard structure |
-| `AttentionFilter.ts` | Filtering logic for intervention-required items |
-| `AttentionScore.ts` | Probability × Impact scoring utility |
-| `ActionPrimitives.ts` | Context/Execute/Collaborate action definitions |
-| `SourceDrawer.tsx` | Slide-in panel for verification/evidence |
-| `CardCollaboration.tsx` | Sharing and collaboration UI |
-| `CardThread.tsx` | In-card comment thread |
-| `FocusView.tsx` | Full-screen focus mode for single item |
-| `DynamicBackground.tsx` | Time-based wallpaper component |
-| `OperatorQuotes.ts` | Curated quotes for completion moments |
+| File                    | Purpose                                         |
+| ----------------------- | ----------------------------------------------- |
+| `AttentionCard.tsx`     | Unified card component with standard structure  |
+| `AttentionFilter.ts`    | Filtering logic for intervention-required items |
+| `AttentionScore.ts`     | Probability × Impact scoring utility            |
+| `ActionPrimitives.ts`   | Context/Execute/Collaborate action definitions  |
+| `SourceDrawer.tsx`      | Slide-in panel for verification/evidence        |
+| `CardCollaboration.tsx` | Sharing and collaboration UI                    |
+| `CardThread.tsx`        | In-card comment thread                          |
+| `FocusView.tsx`         | Full-screen focus mode for single item          |
+| `DynamicBackground.tsx` | Time-based wallpaper component                  |
+| `OperatorQuotes.ts`     | Curated quotes for completion moments           |
 
 ### Files to Modify
 
-| File | Changes |
-|------|---------|
-| `types.ts` | Add: probability, impact, memoryRationale, needsIntervention, needsDecision, collaborators |
-| `data.ts` | Add "why" statements, probability/impact, intervention flags to mock data |
-| `NowScreen.tsx` | Complete redesign: single-column, unified attention stream |
-| `App.tsx` | Layout changes, dynamic background integration |
-| `CommitmentItemWithActions.tsx` | Replace with AttentionCard usage |
-| `index.css` | Enhanced shadows, blue color palette |
-| `electron/main.js` | Haptic feedback support |
+| File                            | Changes                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------ |
+| `types.ts`                      | Add: probability, impact, memoryRationale, needsIntervention, needsDecision, collaborators |
+| `data.ts`                       | Add "why" statements, probability/impact, intervention flags to mock data                  |
+| `NowScreen.tsx`                 | Complete redesign: single-column, unified attention stream                                 |
+| `App.tsx`                       | Layout changes, dynamic background integration                                             |
+| `CommitmentItemWithActions.tsx` | Replace with AttentionCard usage                                                           |
+| `index.css`                     | Enhanced shadows, blue color palette                                                       |
+| `electron/main.js`              | Haptic feedback support                                                                    |
 
 ### Files to Remove/Deprecate
 
-| File | Reason |
-|------|--------|
-| `AlertItem` (in App.tsx) | Replaced by unified AttentionCard |
+| File                          | Reason                            |
+| ----------------------------- | --------------------------------- |
+| `AlertItem` (in App.tsx)      | Replaced by unified AttentionCard |
 | `CommitmentItem` (in App.tsx) | Replaced by unified AttentionCard |
-| `MeetingCard` (in App.tsx) | Replaced by unified AttentionCard |
+| `MeetingCard` (in App.tsx)    | Replaced by unified AttentionCard |
 
 ---
 
@@ -552,4 +553,4 @@ After implementation, verify:
 
 ---
 
-*Document prepared for Sentra Desktop redesign initiative. All changes should be implemented iteratively with user testing at each phase.*
+_Document prepared for Sentra Desktop redesign initiative. All changes should be implemented iteratively with user testing at each phase._

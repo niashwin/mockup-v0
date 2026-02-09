@@ -1,6 +1,6 @@
 // Curated quotes for completion moments that feel personal and encouraging
 
-export type QuoteType = 'complete' | 'snooze' | 'delegate' | 'celebrate';
+export type QuoteType = "complete" | "snooze" | "delegate" | "celebrate";
 
 const QUOTES: Record<QuoteType, string[]> = {
   complete: [
@@ -13,7 +13,7 @@ const QUOTES: Record<QuoteType, string[]> = {
     "Moving forward.",
     "One less thing to worry about.",
     "Good work.",
-    "Handled."
+    "Handled.",
   ],
   snooze: [
     "Smart move. We'll remind you.",
@@ -25,7 +25,7 @@ const QUOTES: Record<QuoteType, string[]> = {
     "We'll circle back.",
     "Rest easy. It's not forgotten.",
     "On pause. We'll ping you.",
-    "Deferred wisely."
+    "Deferred wisely.",
   ],
   delegate: [
     "Passed the baton. They're on it.",
@@ -37,7 +37,7 @@ const QUOTES: Record<QuoteType, string[]> = {
     "Good call on the handoff.",
     "Reassigned and tracked.",
     "Teamwork in action.",
-    "Shared the load."
+    "Shared the load.",
   ],
   celebrate: [
     "That was a big one. Well done.",
@@ -49,8 +49,8 @@ const QUOTES: Record<QuoteType, string[]> = {
     "Crushing it.",
     "What a win.",
     "Excellence in action.",
-    "That's leadership."
-  ]
+    "That's leadership.",
+  ],
 };
 
 // Track which quotes have been used to avoid immediate repetition
@@ -58,7 +58,7 @@ const recentQuotes: Record<QuoteType, Set<number>> = {
   complete: new Set(),
   snooze: new Set(),
   delegate: new Set(),
-  celebrate: new Set()
+  celebrate: new Set(),
 };
 
 /**
@@ -72,7 +72,7 @@ export function getOperatorQuote(type: QuoteType): string {
   // Find available quotes (not recently used)
   const availableIndices = quotes
     .map((_, i) => i)
-    .filter(i => !recent.has(i));
+    .filter((i) => !recent.has(i));
 
   // If we've used all quotes, reset the tracking
   if (availableIndices.length === 0) {
@@ -81,7 +81,8 @@ export function getOperatorQuote(type: QuoteType): string {
   }
 
   // Pick a random available quote
-  const randomIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
+  const randomIndex =
+    availableIndices[Math.floor(Math.random() * availableIndices.length)];
   recent.add(randomIndex);
 
   // Keep the recent set from growing too large (remember last 3)
@@ -98,7 +99,7 @@ export function getOperatorQuote(type: QuoteType): string {
  * Used for high-impact items or streaks
  */
 export function getCelebratoryQuote(): string {
-  return getOperatorQuote('celebrate');
+  return getOperatorQuote("celebrate");
 }
 
 /**
@@ -117,7 +118,8 @@ export function shouldCelebrate(context: {
   if (context.streak && context.streak >= 3) return true;
 
   // Celebrate milestone completions (5, 10, 15...)
-  if (context.completedToday > 0 && context.completedToday % 5 === 0) return true;
+  if (context.completedToday > 0 && context.completedToday % 5 === 0)
+    return true;
 
   // Small random chance to celebrate anyway (5%)
   return Math.random() < 0.05;
@@ -149,7 +151,7 @@ export function getEmptyStateMessage(): string {
     "Clear skies ahead.",
     "Inbox zero energy.",
     "Zen mode activated.",
-    "Enjoy the calm."
+    "Enjoy the calm.",
   ];
 
   return messages[Math.floor(Math.random() * messages.length)];
@@ -159,9 +161,9 @@ export function getEmptyStateMessage(): string {
  * Get a context-aware quote based on various factors
  */
 export function getContextualQuote(context: {
-  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
+  timeOfDay?: "morning" | "afternoon" | "evening" | "night";
   completionStreak?: number;
-  itemType?: 'commitment' | 'meeting' | 'alert';
+  itemType?: "commitment" | "meeting" | "alert";
   completedToday?: number;
 }): string {
   const { timeOfDay, completionStreak, itemType, completedToday } = context;
@@ -172,7 +174,7 @@ export function getContextualQuote(context: {
       `${completionStreak} in a row. You're unstoppable.`,
       "On fire today.",
       "Momentum is building.",
-      "Keep that streak alive."
+      "Keep that streak alive.",
     ];
     return streakQuotes[Math.floor(Math.random() * streakQuotes.length)];
   }
@@ -183,26 +185,26 @@ export function getContextualQuote(context: {
       `${completedToday} done today. Impressive.`,
       "Milestone reached.",
       "That's real progress.",
-      "Productive day so far."
+      "Productive day so far.",
     ];
     return milestoneQuotes[Math.floor(Math.random() * milestoneQuotes.length)];
   }
 
   // Item type specific quotes
-  if (itemType === 'meeting') {
+  if (itemType === "meeting") {
     const meetingQuotes = [
       "Meeting prep complete.",
       "Ready for the call.",
-      "Briefed and prepared."
+      "Briefed and prepared.",
     ];
     return meetingQuotes[Math.floor(Math.random() * meetingQuotes.length)];
   }
 
-  if (itemType === 'alert') {
+  if (itemType === "alert") {
     const alertQuotes = [
       "Risk acknowledged.",
       "On your radar now.",
-      "Awareness is the first step."
+      "Awareness is the first step.",
     ];
     return alertQuotes[Math.floor(Math.random() * alertQuotes.length)];
   }
@@ -213,39 +215,39 @@ export function getContextualQuote(context: {
       morning: [
         "Great way to start the day.",
         "Morning momentum.",
-        "Early progress pays off."
+        "Early progress pays off.",
       ],
       afternoon: [
         "Powering through.",
         "Solid afternoon work.",
-        "Keeping the pace."
+        "Keeping the pace.",
       ],
       evening: [
         "Wrapping up for the day?",
         "Evening productivity.",
-        "Strong finish."
+        "Strong finish.",
       ],
       night: [
         "Burning the midnight oil?",
         "Late night hustle.",
-        "Dedicated work."
-      ]
+        "Dedicated work.",
+      ],
     };
     const quotes = timeQuotes[timeOfDay];
     return quotes[Math.floor(Math.random() * quotes.length)];
   }
 
   // Default to standard completion quote
-  return getOperatorQuote('complete');
+  return getOperatorQuote("complete");
 }
 
 /**
  * Get the current time of day category
  */
-export function getTimeOfDay(): 'morning' | 'afternoon' | 'evening' | 'night' {
+export function getTimeOfDay(): "morning" | "afternoon" | "evening" | "night" {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'morning';
-  if (hour >= 12 && hour < 17) return 'afternoon';
-  if (hour >= 17 && hour < 21) return 'evening';
-  return 'night';
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 21) return "evening";
+  return "night";
 }

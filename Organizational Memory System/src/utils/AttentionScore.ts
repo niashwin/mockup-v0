@@ -1,4 +1,4 @@
-import { AttentionItem, Probability, Impact } from '../types';
+import { AttentionItem, Probability, Impact } from "../types";
 
 /**
  * Attention Score Algorithm (Principle 3: Weight by probability × impact)
@@ -30,13 +30,13 @@ import { AttentionItem, Probability, Impact } from '../types';
 const PROBABILITY_WEIGHTS: Record<Probability, number> = {
   high: 0.9,
   medium: 0.5,
-  low: 0.1
+  low: 0.1,
 };
 
 const IMPACT_WEIGHTS: Record<Impact, number> = {
   high: 10,
   medium: 5,
-  low: 1
+  low: 1,
 };
 
 // Score threshold - items below this are not attention-worthy
@@ -56,8 +56,8 @@ const ATTENTION_THRESHOLD = 3;
  * - 7+: Critical, address immediately
  */
 export function calculateAttentionScore(item: AttentionItem): number {
-  const probability = item.probability || 'low';
-  const impact = item.impact || 'low';
+  const probability = item.probability || "low";
+  const impact = item.impact || "low";
 
   const baseScore = PROBABILITY_WEIGHTS[probability] * IMPACT_WEIGHTS[impact];
 
@@ -117,8 +117,10 @@ export function sortByAttentionScore(items: AttentionItem[]): AttentionItem[] {
  *
  * Combined with Principle 3: Low-anything gets filtered out
  */
-export function filterForAttentionPane(items: AttentionItem[]): AttentionItem[] {
-  return items.filter(item => {
+export function filterForAttentionPane(
+  items: AttentionItem[],
+): AttentionItem[] {
+  return items.filter((item) => {
     // STRICT GATE 1: Must need intervention OR decision
     // If neither flag is set, this is just a status update - filter it out
     if (!item.needsIntervention && !item.needsDecision) {
@@ -170,10 +172,10 @@ export function groupByAttentionType(items: AttentionItem[]): {
  * - Below 3: Low (should be filtered out)
  */
 export function getScoreLabel(score: number): string {
-  if (score >= 7) return 'Critical';
-  if (score >= 5) return 'High';
-  if (score >= 3) return 'Medium';
-  return 'Low';
+  if (score >= 7) return "Critical";
+  if (score >= 5) return "High";
+  if (score >= 3) return "Medium";
+  return "Low";
 }
 
 /**
@@ -206,11 +208,11 @@ export function getRelativeTime(timestamp: string): string {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffMins < 1) return 'Just now';
+  if (diffMins < 1) return "Just now";
   if (diffMins < 60) return `${diffMins}m ago`;
   if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'Yesterday';
+  if (diffDays === 1) return "Yesterday";
   if (diffDays < 7) return `${diffDays}d ago`;
 
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }

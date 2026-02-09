@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState } from "react";
+import { motion } from "motion/react";
 import {
   CalendarDays,
   Clock,
@@ -11,78 +11,99 @@ import {
   RotateCcw,
   Settings,
   Plus,
-  Trash2
-} from 'lucide-react';
-import { useScheduling } from './SchedulingProvider';
-import { SchedulingOnboarding } from './SchedulingOnboarding';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { Switch } from './ui/switch';
-import { MapPreview } from './MapPreview';
-import { DayOfWeek, LocationMode, SavedLocation } from '../types';
-import { getTimezoneOptions } from '../utils/SchedulingUtils';
+  Trash2,
+} from "lucide-react";
+import { useScheduling } from "./SchedulingProvider";
+import { SchedulingOnboarding } from "./SchedulingOnboarding";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
+import { Switch } from "./ui/switch";
+import { MapPreview } from "./MapPreview";
+import { DayOfWeek, LocationMode, SavedLocation } from "../types";
+import { getTimezoneOptions } from "../utils/SchedulingUtils";
 
 const DAYS: { key: DayOfWeek; label: string }[] = [
-  { key: 'monday', label: 'Monday' },
-  { key: 'tuesday', label: 'Tuesday' },
-  { key: 'wednesday', label: 'Wednesday' },
-  { key: 'thursday', label: 'Thursday' },
-  { key: 'friday', label: 'Friday' },
-  { key: 'saturday', label: 'Saturday' },
-  { key: 'sunday', label: 'Sunday' },
+  { key: "monday", label: "Monday" },
+  { key: "tuesday", label: "Tuesday" },
+  { key: "wednesday", label: "Wednesday" },
+  { key: "thursday", label: "Thursday" },
+  { key: "friday", label: "Friday" },
+  { key: "saturday", label: "Saturday" },
+  { key: "sunday", label: "Sunday" },
 ];
 
 const TIME_OPTIONS = Array.from({ length: 48 }, (_, i) => {
   const hour = Math.floor(i / 2);
   const minute = (i % 2) * 30;
-  const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-  const label = new Date(2000, 0, 1, hour, minute).toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
+  const time = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+  const label = new Date(2000, 0, 1, hour, minute).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
   });
   return { value: time, label };
 });
 
 export const SchedulingSettingsSection: React.FC = () => {
-  const { isOnboarded, preferences, updatePreferences, setOnboarded, resetToDefaults } = useScheduling();
+  const {
+    isOnboarded,
+    preferences,
+    updatePreferences,
+    setOnboarded,
+    resetToDefaults,
+  } = useScheduling();
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [newLocationName, setNewLocationName] = useState('');
-  const [newLocationAddress, setNewLocationAddress] = useState('');
+  const [newLocationName, setNewLocationName] = useState("");
+  const [newLocationAddress, setNewLocationAddress] = useState("");
 
   const toggleDay = (day: DayOfWeek) => {
-    const newSchedule = preferences.workingAvailability.weekSchedule.map(d => {
-      if (d.day === day) {
-        return {
-          ...d,
-          enabled: !d.enabled,
-          timeRanges: !d.enabled ? [{ start: '09:00', end: '17:00' }] : d.timeRanges
-        };
-      }
-      return d;
-    });
+    const newSchedule = preferences.workingAvailability.weekSchedule.map(
+      (d) => {
+        if (d.day === day) {
+          return {
+            ...d,
+            enabled: !d.enabled,
+            timeRanges: !d.enabled
+              ? [{ start: "09:00", end: "17:00" }]
+              : d.timeRanges,
+          };
+        }
+        return d;
+      },
+    );
     updatePreferences({
       workingAvailability: {
         ...preferences.workingAvailability,
-        weekSchedule: newSchedule
-      }
+        weekSchedule: newSchedule,
+      },
     });
   };
 
-  const updateDayTime = (day: DayOfWeek, field: 'start' | 'end', value: string) => {
-    const newSchedule = preferences.workingAvailability.weekSchedule.map(d => {
-      if (d.day === day && d.timeRanges.length > 0) {
-        return {
-          ...d,
-          timeRanges: [{ ...d.timeRanges[0], [field]: value }]
-        };
-      }
-      return d;
-    });
+  const updateDayTime = (
+    day: DayOfWeek,
+    field: "start" | "end",
+    value: string,
+  ) => {
+    const newSchedule = preferences.workingAvailability.weekSchedule.map(
+      (d) => {
+        if (d.day === day && d.timeRanges.length > 0) {
+          return {
+            ...d,
+            timeRanges: [{ ...d.timeRanges[0], [field]: value }],
+          };
+        }
+        return d;
+      },
+    );
     updatePreferences({
       workingAvailability: {
         ...preferences.workingAvailability,
-        weekSchedule: newSchedule
-      }
+        weekSchedule: newSchedule,
+      },
     });
   };
 
@@ -93,19 +114,19 @@ export const SchedulingSettingsSection: React.FC = () => {
       id: `loc-${Date.now()}`,
       name: newLocationName.trim(),
       address: newLocationAddress.trim(),
-      type: 'other'
+      type: "other",
     };
 
     updatePreferences({
-      savedLocations: [...preferences.savedLocations, newLocation]
+      savedLocations: [...preferences.savedLocations, newLocation],
     });
-    setNewLocationName('');
-    setNewLocationAddress('');
+    setNewLocationName("");
+    setNewLocationAddress("");
   };
 
   const removeLocation = (id: string) => {
     updatePreferences({
-      savedLocations: preferences.savedLocations.filter(l => l.id !== id)
+      savedLocations: preferences.savedLocations.filter((l) => l.id !== id),
     });
   };
 
@@ -114,19 +135,22 @@ export const SchedulingSettingsSection: React.FC = () => {
     return (
       <>
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-emerald-50 to-transparent dark:from-emerald-900/10 dark:to-transparent">
+          <div className="p-6 rounded-2xl border border-border bg-gradient-to-br from-accent/5 to-transparent dark:from-accent/10 dark:to-transparent">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                <CalendarDays className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              <div className="w-12 h-12 rounded-[7px] bg-accent/10 flex items-center justify-center shrink-0">
+                <CalendarDays className="w-6 h-6 text-accent" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Set Up Scheduling</h3>
-                <p className="text-sm text-zinc-500 mt-1 mb-4">
-                  Configure your availability and preferences so Sentra can intelligently help you schedule meetings.
+                <h3 className="text-lg font-semibold text-foreground">
+                  Set Up Scheduling
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1 mb-4">
+                  Configure your availability and preferences so Sentra can
+                  intelligently help you schedule meetings.
                 </p>
                 <button
                   onClick={() => setShowOnboarding(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/90 text-white rounded-[7px] text-sm font-medium transition-colors"
                 >
                   <Settings className="w-4 h-4" />
                   Set up scheduling
@@ -150,13 +174,14 @@ export const SchedulingSettingsSection: React.FC = () => {
       <div className="space-y-6">
         {/* Header with actions */}
         <div className="flex items-center justify-between">
-          <p className="text-sm text-zinc-500">
-            Manage your scheduling preferences to help Sentra find the best times for meetings.
+          <p className="text-sm text-muted-foreground">
+            Manage your scheduling preferences to help Sentra find the best
+            times for meetings.
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowOnboarding(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-border rounded-[7px] hover:bg-background dark:hover:bg-neutral-800 transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Re-run setup
@@ -165,18 +190,32 @@ export const SchedulingSettingsSection: React.FC = () => {
         </div>
 
         {/* Settings Accordion */}
-        <Accordion type="multiple" defaultValue={['availability']} className="space-y-3">
+        <Accordion
+          type="multiple"
+          defaultValue={["availability"]}
+          className="space-y-3"
+        >
           {/* Meeting Availability */}
-          <AccordionItem value="availability" className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+          <AccordionItem
+            value="availability"
+            className="border border-border rounded-[7px] overflow-hidden"
+          >
             <AccordionTrigger className="px-4 hover:no-underline">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <div className="w-8 h-8 rounded-[7px] bg-accent/10 flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-accent" />
                 </div>
                 <div className="text-left">
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">Meeting Availability</span>
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    {preferences.workingAvailability.weekSchedule.filter(d => d.enabled).length} days active
+                  <span className="font-medium text-foreground">
+                    Meeting Availability
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {
+                      preferences.workingAvailability.weekSchedule.filter(
+                        (d) => d.enabled,
+                      ).length
+                    }{" "}
+                    days active
                   </p>
                 </div>
               </div>
@@ -184,19 +223,25 @@ export const SchedulingSettingsSection: React.FC = () => {
             <AccordionContent className="px-4 pb-4">
               {/* Timezone */}
               <div className="mb-4">
-                <label className="block text-xs font-medium text-zinc-500 uppercase mb-2">Timezone</label>
+                <label className="block text-xs font-medium text-muted-foreground uppercase mb-2">
+                  Timezone
+                </label>
                 <select
                   value={preferences.workingAvailability.timezone}
-                  onChange={(e) => updatePreferences({
-                    workingAvailability: {
-                      ...preferences.workingAvailability,
-                      timezone: e.target.value
-                    }
-                  })}
-                  className="w-full p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm"
+                  onChange={(e) =>
+                    updatePreferences({
+                      workingAvailability: {
+                        ...preferences.workingAvailability,
+                        timezone: e.target.value,
+                      },
+                    })
+                  }
+                  className="w-full p-2 bg-card dark:bg-neutral-900 border border-border rounded-[7px] text-sm"
                 >
-                  {getTimezoneOptions().map(tz => (
-                    <option key={tz.value} value={tz.value}>{tz.label}</option>
+                  {getTimezoneOptions().map((tz) => (
+                    <option key={tz.value} value={tz.value}>
+                      {tz.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -204,45 +249,60 @@ export const SchedulingSettingsSection: React.FC = () => {
               {/* Day Schedules */}
               <div className="space-y-2">
                 {DAYS.map(({ key, label }) => {
-                  const daySchedule = preferences.workingAvailability.weekSchedule.find(d => d.day === key);
+                  const daySchedule =
+                    preferences.workingAvailability.weekSchedule.find(
+                      (d) => d.day === key,
+                    );
                   const isEnabled = daySchedule?.enabled ?? false;
                   const timeRange = daySchedule?.timeRanges[0];
 
                   return (
                     <div
                       key={key}
-                      className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${
+                      className={`flex items-center gap-3 p-2.5 rounded-[7px] border transition-colors ${
                         isEnabled
-                          ? 'border-emerald-200/50 dark:border-emerald-800/30 bg-emerald-50/50 dark:bg-emerald-900/10'
-                          : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900'
+                          ? "border-accent/20 bg-accent/5"
+                          : "border-border bg-background dark:bg-neutral-900"
                       }`}
                     >
                       <Switch
                         checked={isEnabled}
                         onCheckedChange={() => toggleDay(key)}
                       />
-                      <span className={`text-sm w-20 ${isEnabled ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400'}`}>
+                      <span
+                        className={`text-sm w-20 ${isEnabled ? "text-foreground" : "text-muted-foreground"}`}
+                      >
                         {label}
                       </span>
                       {isEnabled && timeRange && (
                         <div className="flex items-center gap-2 ml-auto">
                           <select
                             value={timeRange.start}
-                            onChange={(e) => updateDayTime(key, 'start', e.target.value)}
-                            className="text-xs p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded"
+                            onChange={(e) =>
+                              updateDayTime(key, "start", e.target.value)
+                            }
+                            className="text-xs p-1.5 bg-card dark:bg-neutral-800 border border-border rounded"
                           >
-                            {TIME_OPTIONS.map(t => (
-                              <option key={t.value} value={t.value}>{t.label}</option>
+                            {TIME_OPTIONS.map((t) => (
+                              <option key={t.value} value={t.value}>
+                                {t.label}
+                              </option>
                             ))}
                           </select>
-                          <span className="text-zinc-400 text-xs">to</span>
+                          <span className="text-muted-foreground text-xs">
+                            to
+                          </span>
                           <select
                             value={timeRange.end}
-                            onChange={(e) => updateDayTime(key, 'end', e.target.value)}
-                            className="text-xs p-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded"
+                            onChange={(e) =>
+                              updateDayTime(key, "end", e.target.value)
+                            }
+                            className="text-xs p-1.5 bg-card dark:bg-neutral-800 border border-border rounded"
                           >
-                            {TIME_OPTIONS.map(t => (
-                              <option key={t.value} value={t.value}>{t.label}</option>
+                            {TIME_OPTIONS.map((t) => (
+                              <option key={t.value} value={t.value}>
+                                {t.label}
+                              </option>
                             ))}
                           </select>
                         </div>
@@ -255,55 +315,72 @@ export const SchedulingSettingsSection: React.FC = () => {
           </AccordionItem>
 
           {/* Work Location */}
-          <AccordionItem value="location" className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+          <AccordionItem
+            value="location"
+            className="border border-border rounded-[7px] overflow-hidden"
+          >
             <AccordionTrigger className="px-4 hover:no-underline">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-[7px] bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                   <MapPin className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="text-left">
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">Work Location</span>
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    {preferences.workLocation.mode.charAt(0).toUpperCase() + preferences.workLocation.mode.slice(1)}
+                  <span className="font-medium text-foreground">
+                    Work Location
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {preferences.workLocation.mode.charAt(0).toUpperCase() +
+                      preferences.workLocation.mode.slice(1)}
                   </p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
               <div className="grid grid-cols-3 gap-2 mb-4">
-                {(['remote', 'hybrid', 'office'] as LocationMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => updatePreferences({
-                      workLocation: { ...preferences.workLocation, mode }
-                    })}
-                    className={`p-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
-                      preferences.workLocation.mode === mode
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                        : 'border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300'
-                    }`}
-                  >
-                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </button>
-                ))}
+                {(["remote", "hybrid", "office"] as LocationMode[]).map(
+                  (mode) => (
+                    <button
+                      key={mode}
+                      onClick={() =>
+                        updatePreferences({
+                          workLocation: { ...preferences.workLocation, mode },
+                        })
+                      }
+                      className={`p-2.5 rounded-[7px] border-2 text-sm font-medium transition-all ${
+                        preferences.workLocation.mode === mode
+                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                          : "border-border text-muted-foreground hover:border-border"
+                      }`}
+                    >
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </button>
+                  ),
+                )}
               </div>
 
-              {preferences.workLocation.mode !== 'remote' && (
+              {preferences.workLocation.mode !== "remote" && (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-500 uppercase mb-1.5">Office Address</label>
+                    <label className="block text-xs font-medium text-muted-foreground uppercase mb-1.5">
+                      Office Address
+                    </label>
                     <input
                       type="text"
-                      value={preferences.workLocation.officeAddress || ''}
-                      onChange={(e) => updatePreferences({
-                        workLocation: { ...preferences.workLocation, officeAddress: e.target.value }
-                      })}
+                      value={preferences.workLocation.officeAddress || ""}
+                      onChange={(e) =>
+                        updatePreferences({
+                          workLocation: {
+                            ...preferences.workLocation,
+                            officeAddress: e.target.value,
+                          },
+                        })
+                      }
                       placeholder="e.g., 123 Main St, San Francisco, CA"
-                      className="w-full p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm"
+                      className="w-full p-2 bg-card dark:bg-neutral-900 border border-border rounded-[7px] text-sm"
                     />
                   </div>
                   <MapPreview
-                    address={preferences.workLocation.officeAddress || ''}
+                    address={preferences.workLocation.officeAddress || ""}
                     height="150px"
                   />
                 </div>
@@ -312,48 +389,79 @@ export const SchedulingSettingsSection: React.FC = () => {
           </AccordionItem>
 
           {/* Meeting Context */}
-          <AccordionItem value="context" className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+          <AccordionItem
+            value="context"
+            className="border border-border rounded-[7px] overflow-hidden"
+          >
             <AccordionTrigger className="px-4 hover:no-underline">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-[7px] bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                   <Coffee className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 </div>
                 <div className="text-left">
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">Meeting Preferences</span>
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    {preferences.meetingContext.bufferBetweenMeetings} min buffer
+                  <span className="font-medium text-foreground">
+                    Meeting Preferences
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {preferences.meetingContext.bufferBetweenMeetings} min
+                    buffer
                   </p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4 space-y-3">
               {[
-                { key: 'allowBreakfastMeetings', label: 'Allow breakfast meetings' },
-                { key: 'allowLunchMeetings', label: 'Allow lunch meetings' },
-                { key: 'allowDinnerMeetings', label: 'Allow dinner meetings' }
+                {
+                  key: "allowBreakfastMeetings",
+                  label: "Allow breakfast meetings",
+                },
+                { key: "allowLunchMeetings", label: "Allow lunch meetings" },
+                { key: "allowDinnerMeetings", label: "Allow dinner meetings" },
               ].map((item) => (
-                <div key={item.key} className="flex items-center justify-between">
-                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{item.label}</span>
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between"
+                >
+                  <span className="text-sm text-foreground">{item.label}</span>
                   <Switch
-                    checked={preferences.meetingContext[item.key as keyof typeof preferences.meetingContext] as boolean}
-                    onCheckedChange={(checked) => updatePreferences({
-                      meetingContext: { ...preferences.meetingContext, [item.key]: checked }
-                    })}
+                    checked={
+                      preferences.meetingContext[
+                        item.key as keyof typeof preferences.meetingContext
+                      ] as boolean
+                    }
+                    onCheckedChange={(checked) =>
+                      updatePreferences({
+                        meetingContext: {
+                          ...preferences.meetingContext,
+                          [item.key]: checked,
+                        },
+                      })
+                    }
                   />
                 </div>
               ))}
 
               <div>
-                <label className="block text-xs font-medium text-zinc-500 uppercase mb-1">
-                  Buffer Between Meetings <span className="text-zinc-400 normal-case">(if no travel)</span>
+                <label className="block text-xs font-medium text-muted-foreground uppercase mb-1">
+                  Buffer Between Meetings{" "}
+                  <span className="text-muted-foreground normal-case">
+                    (if no travel)
+                  </span>
                 </label>
-                <p className="text-[11px] text-zinc-400 mb-1.5">Travel time will be calculated automatically</p>
+                <p className="text-[11px] text-muted-foreground mb-1.5">
+                  Travel time will be calculated automatically
+                </p>
                 <select
                   value={preferences.meetingContext.bufferBetweenMeetings}
-                  onChange={(e) => updatePreferences({
-                    meetingContext: { ...preferences.meetingContext, bufferBetweenMeetings: Number(e.target.value) }
-                  })}
-                  className="w-full p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm"
+                  onChange={(e) =>
+                    updatePreferences({
+                      meetingContext: {
+                        ...preferences.meetingContext,
+                        bufferBetweenMeetings: Number(e.target.value),
+                      },
+                    })
+                  }
+                  className="w-full p-2 bg-card dark:bg-neutral-900 border border-border rounded-[7px] text-sm"
                 >
                   <option value={0}>No buffer</option>
                   <option value={5}>5 minutes</option>
@@ -366,16 +474,23 @@ export const SchedulingSettingsSection: React.FC = () => {
           </AccordionItem>
 
           {/* Quick Save Locations */}
-          <AccordionItem value="locations" className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+          <AccordionItem
+            value="locations"
+            className="border border-border rounded-[7px] overflow-hidden"
+          >
             <AccordionTrigger className="px-4 hover:no-underline">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-[7px] bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                   <BookOpen className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="text-left">
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">Quick Save Locations</span>
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    {preferences.savedLocations.length} location{preferences.savedLocations.length !== 1 ? 's' : ''} • Auto-saves from meetings
+                  <span className="font-medium text-foreground">
+                    Quick Save Locations
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {preferences.savedLocations.length} location
+                    {preferences.savedLocations.length !== 1 ? "s" : ""} •
+                    Auto-saves from meetings
                   </p>
                 </div>
               </div>
@@ -386,16 +501,20 @@ export const SchedulingSettingsSection: React.FC = () => {
                   {preferences.savedLocations.map((loc) => (
                     <div
                       key={loc.id}
-                      className="flex items-center gap-2 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900"
+                      className="flex items-center gap-2 p-2.5 rounded-[7px] border border-border bg-card dark:bg-neutral-900"
                     >
-                      <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+                      <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{loc.name}</p>
-                        <p className="text-xs text-zinc-500 truncate">{loc.address}</p>
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {loc.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {loc.address}
+                        </p>
                       </div>
                       <button
                         onClick={() => removeLocation(loc.id)}
-                        className="p-1 text-zinc-400 hover:text-red-500 transition-colors"
+                        className="p-1 text-muted-foreground hover:text-red-500 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -411,96 +530,132 @@ export const SchedulingSettingsSection: React.FC = () => {
                     value={newLocationName}
                     onChange={(e) => setNewLocationName(e.target.value)}
                     placeholder="Name"
-                    className="flex-1 p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm"
+                    className="flex-1 p-2 bg-card dark:bg-neutral-900 border border-border rounded-[7px] text-sm"
                   />
                   <input
                     type="text"
                     value={newLocationAddress}
                     onChange={(e) => setNewLocationAddress(e.target.value)}
                     placeholder="Address"
-                    className="flex-1 p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm"
+                    className="flex-1 p-2 bg-card dark:bg-neutral-900 border border-border rounded-[7px] text-sm"
                   />
                   <button
                     onClick={addLocation}
-                    disabled={!newLocationName.trim() || !newLocationAddress.trim()}
-                    className="p-2 bg-purple-600 hover:bg-purple-700 disabled:bg-zinc-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    disabled={
+                      !newLocationName.trim() || !newLocationAddress.trim()
+                    }
+                    className="p-2 bg-purple-600 hover:bg-purple-700 disabled:bg-neutral-300 disabled:cursor-not-allowed text-white rounded-[7px] transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 {newLocationAddress && (
-                  <MapPreview
-                    address={newLocationAddress}
-                    height="140px"
-                  />
+                  <MapPreview address={newLocationAddress} height="140px" />
                 )}
               </div>
             </AccordionContent>
           </AccordionItem>
 
           {/* Communication Style */}
-          <AccordionItem value="communication" className="border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden">
+          <AccordionItem
+            value="communication"
+            className="border border-border rounded-[7px] overflow-hidden"
+          >
             <AccordionTrigger className="px-4 hover:no-underline">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-[7px] bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
                   <Mail className="w-4 h-4 text-pink-600 dark:text-pink-400" />
                 </div>
                 <div className="text-left">
-                  <span className="font-medium text-zinc-900 dark:text-zinc-100">Communication Style</span>
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    {preferences.communicationStyle.preferSchedulingLinks ? 'Scheduling links' : 'Email coordination'}
+                  <span className="font-medium text-foreground">
+                    Communication Style
+                  </span>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {preferences.communicationStyle.preferSchedulingLinks
+                      ? "Scheduling links"
+                      : "Email coordination"}
                   </p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-500 uppercase mb-1.5">Your Name / Signature</label>
+                <label className="block text-xs font-medium text-muted-foreground uppercase mb-1.5">
+                  Your Name / Signature
+                </label>
                 <input
                   type="text"
                   value={preferences.communicationStyle.signature}
-                  onChange={(e) => updatePreferences({
-                    communicationStyle: { ...preferences.communicationStyle, signature: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    updatePreferences({
+                      communicationStyle: {
+                        ...preferences.communicationStyle,
+                        signature: e.target.value,
+                      },
+                    })
+                  }
                   placeholder="e.g., Alex Lewis"
-                  className="w-full p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm"
+                  className="w-full p-2 bg-card dark:bg-neutral-900 border border-border rounded-[7px] text-sm"
                 />
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-700 dark:text-zinc-300">Prefer scheduling links</span>
+                <span className="text-sm text-foreground">
+                  Prefer scheduling links
+                </span>
                 <Switch
                   checked={preferences.communicationStyle.preferSchedulingLinks}
-                  onCheckedChange={(checked) => updatePreferences({
-                    communicationStyle: { ...preferences.communicationStyle, preferSchedulingLinks: checked }
-                  })}
+                  onCheckedChange={(checked) =>
+                    updatePreferences({
+                      communicationStyle: {
+                        ...preferences.communicationStyle,
+                        preferSchedulingLinks: checked,
+                      },
+                    })
+                  }
                 />
               </div>
 
               {preferences.communicationStyle.preferSchedulingLinks && (
                 <div>
-                  <label className="block text-xs font-medium text-zinc-500 uppercase mb-1.5">Scheduling Link URL</label>
+                  <label className="block text-xs font-medium text-muted-foreground uppercase mb-1.5">
+                    Scheduling Link URL
+                  </label>
                   <input
                     type="url"
-                    value={preferences.communicationStyle.schedulingLinkUrl || ''}
-                    onChange={(e) => updatePreferences({
-                      communicationStyle: { ...preferences.communicationStyle, schedulingLinkUrl: e.target.value }
-                    })}
+                    value={
+                      preferences.communicationStyle.schedulingLinkUrl || ""
+                    }
+                    onChange={(e) =>
+                      updatePreferences({
+                        communicationStyle: {
+                          ...preferences.communicationStyle,
+                          schedulingLinkUrl: e.target.value,
+                        },
+                      })
+                    }
                     placeholder="https://calendly.com/yourname"
-                    className="w-full p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm"
+                    className="w-full p-2 bg-card dark:bg-neutral-900 border border-border rounded-[7px] text-sm"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-medium text-zinc-500 uppercase mb-1.5">Email Template</label>
+                <label className="block text-xs font-medium text-muted-foreground uppercase mb-1.5">
+                  Email Template
+                </label>
                 <textarea
                   value={preferences.communicationStyle.emailTemplate}
-                  onChange={(e) => updatePreferences({
-                    communicationStyle: { ...preferences.communicationStyle, emailTemplate: e.target.value }
-                  })}
+                  onChange={(e) =>
+                    updatePreferences({
+                      communicationStyle: {
+                        ...preferences.communicationStyle,
+                        emailTemplate: e.target.value,
+                      },
+                    })
+                  }
                   rows={6}
-                  className="w-full p-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm font-mono resize-none"
+                  className="w-full p-2 bg-card dark:bg-neutral-900 border border-border rounded-[7px] text-sm font-mono resize-none"
                 />
               </div>
             </AccordionContent>
@@ -508,10 +663,10 @@ export const SchedulingSettingsSection: React.FC = () => {
         </Accordion>
 
         {/* Reset Button */}
-        <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="pt-4 border-t border-border">
           <button
             onClick={resetToDefaults}
-            className="text-sm text-zinc-500 hover:text-red-600 transition-colors"
+            className="text-sm text-muted-foreground hover:text-red-600 transition-colors"
           >
             Reset to defaults
           </button>

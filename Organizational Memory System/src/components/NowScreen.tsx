@@ -1,14 +1,29 @@
-import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Video, Clock, ChevronDown, CheckCircle2 } from 'lucide-react';
-import { Commitment, MeetingBrief, Alert, AttentionItem, RelationshipAlert } from '../types';
-import { ChatInterface } from './ChatInterface';
-import { FocusView } from './FocusView';
-import { SourceDrawer } from './SourceDrawer';
-import { AttentionCard } from './AttentionCard';
-import { toast } from 'sonner';
-import { getOperatorQuote, getCelebratoryQuote, shouldCelebrate, getContextualQuote, getTimeOfDay } from '../utils/OperatorQuotes';
-import { sortByAttentionScore, filterForAttentionPane } from '../utils/AttentionScore';
+import React, { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { X, Video, Clock, ChevronDown, CheckCircle2 } from "lucide-react";
+import {
+  Commitment,
+  MeetingBrief,
+  Alert,
+  AttentionItem,
+  RelationshipAlert,
+} from "../types";
+import { ChatInterface } from "./ChatInterface";
+import { FocusView } from "./FocusView";
+import { SourceDrawer } from "./SourceDrawer";
+import { AttentionCard } from "./AttentionCard";
+import { toast } from "sonner";
+import {
+  getOperatorQuote,
+  getCelebratoryQuote,
+  shouldCelebrate,
+  getContextualQuote,
+  getTimeOfDay,
+} from "../utils/OperatorQuotes";
+import {
+  sortByAttentionScore,
+  filterForAttentionPane,
+} from "../utils/AttentionScore";
 
 /**
  * Next Meeting Banner
@@ -21,19 +36,27 @@ interface NextMeetingBannerProps {
   onViewBrief: () => void;
 }
 
-function NextMeetingBanner({ meeting, onDismiss, onJoin, onViewBrief }: NextMeetingBannerProps) {
+function NextMeetingBanner({
+  meeting,
+  onDismiss,
+  onJoin,
+  onViewBrief,
+}: NextMeetingBannerProps) {
   if (!meeting) return null;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -20, height: 0 }}
-      animate={{ opacity: 1, y: 0, height: 'auto' }}
+      animate={{ opacity: 1, y: 0, height: "auto" }}
       exit={{ opacity: 0, y: -20, height: 0 }}
       className="mb-6"
     >
       <div className="relative bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-transparent dark:from-blue-500/20 dark:via-blue-500/10 border border-blue-200/50 dark:border-blue-800/50 rounded-2xl p-4 overflow-hidden">
         {/* Subtle pulse effect */}
-        <div className="absolute inset-0 bg-blue-500/5 animate-pulse" style={{ animationDuration: '3s' }} />
+        <div
+          className="absolute inset-0 bg-blue-500/5 animate-pulse"
+          style={{ animationDuration: "3s" }}
+        />
 
         <div className="relative flex items-center gap-4">
           {/* Meeting Icon */}
@@ -56,7 +79,8 @@ function NextMeetingBanner({ meeting, onDismiss, onJoin, onViewBrief }: NextMeet
               {meeting.title}
             </h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              {meeting.participants?.length || 0} participants • {meeting.duration || '30 min'}
+              {meeting.participants?.length || 0} participants •{" "}
+              {meeting.duration || "30 min"}
             </p>
           </div>
 
@@ -98,7 +122,11 @@ interface MoreIndicatorProps {
   onToggle: () => void;
 }
 
-function MoreIndicator({ remainingCount, isExpanded, onToggle }: MoreIndicatorProps) {
+function MoreIndicator({
+  remainingCount,
+  isExpanded,
+  onToggle,
+}: MoreIndicatorProps) {
   if (remainingCount <= 0) return null;
 
   return (
@@ -108,7 +136,11 @@ function MoreIndicator({ remainingCount, isExpanded, onToggle }: MoreIndicatorPr
       onClick={onToggle}
       className="w-full mt-4 py-3 flex items-center justify-center gap-2 text-xs font-medium text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-400 transition-colors group"
     >
-      <span>{isExpanded ? 'Show less' : `${remainingCount} more item${remainingCount > 1 ? 's' : ''}`}</span>
+      <span>
+        {isExpanded
+          ? "Show less"
+          : `${remainingCount} more item${remainingCount > 1 ? "s" : ""}`}
+      </span>
       <motion.div animate={{ rotate: isExpanded ? 180 : 0 }}>
         <ChevronDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
       </motion.div>
@@ -122,14 +154,16 @@ export const NowScreen = ({
   alerts,
   meetingBriefs,
   relationshipAlerts = [],
-  onNavigate
+  onNavigate,
 }: {
-  commitments: Commitment[],
-  onToggle: (id: string) => void,
-  alerts: Alert[],
-  meetingBriefs: MeetingBrief[],
-  relationshipAlerts?: RelationshipAlert[],
-  onNavigate: (tab: 'Now' | 'Reports' | 'Swimlanes' | 'Meetings' | 'ToDo' | 'Settings') => void
+  commitments: Commitment[];
+  onToggle: (id: string) => void;
+  alerts: Alert[];
+  meetingBriefs: MeetingBrief[];
+  relationshipAlerts?: RelationshipAlert[];
+  onNavigate: (
+    tab: "Now" | "Reports" | "Swimlanes" | "Meetings" | "ToDo" | "Settings",
+  ) => void;
 }) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [focusedItem, setFocusedItem] = useState<AttentionItem | null>(null);
@@ -147,7 +181,7 @@ export const NowScreen = ({
     const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
 
     // For demo purposes, just show the first scheduled meeting
-    const scheduled = meetingBriefs.find(m => m.status === 'scheduled');
+    const scheduled = meetingBriefs.find((m) => m.status === "scheduled");
     return scheduled || null;
   }, [meetingBriefs, meetingDismissed]);
 
@@ -157,37 +191,39 @@ export const NowScreen = ({
     const items: AttentionItem[] = [];
 
     // Add relationship alerts FIRST - these are often most urgent for low-meeting users
-    relationshipAlerts.forEach(relationship => {
+    relationshipAlerts.forEach((relationship) => {
       items.push({
         ...relationship,
-        itemType: 'relationship' as const
+        itemType: "relationship" as const,
       });
     });
 
     // Add pending commitments (so they appear before alerts in ties)
-    commitments.filter(c => c.status !== 'completed').forEach(commitment => {
-      items.push({
-        ...commitment,
-        itemType: 'commitment' as const
+    commitments
+      .filter((c) => c.status !== "completed")
+      .forEach((commitment) => {
+        items.push({
+          ...commitment,
+          itemType: "commitment" as const,
+        });
       });
-    });
 
     // Add alerts
-    alerts.forEach(alert => {
+    alerts.forEach((alert) => {
       items.push({
         ...alert,
-        itemType: 'alert' as const
+        itemType: "alert" as const,
       });
     });
 
     // Add scheduled meetings (but not the next one if showing banner)
     meetingBriefs
-      .filter(m => m.status === 'scheduled')
-      .filter(m => !nextMeeting || m.id !== nextMeeting.id)
-      .forEach(meeting => {
+      .filter((m) => m.status === "scheduled")
+      .filter((m) => !nextMeeting || m.id !== nextMeeting.id)
+      .forEach((meeting) => {
         items.push({
           ...meeting,
-          itemType: 'meeting' as const
+          itemType: "meeting" as const,
         });
       });
 
@@ -208,8 +244,8 @@ export const NowScreen = ({
   // Handle actions
   const handleAction = (actionId: string, item: AttentionItem) => {
     switch (actionId) {
-      case 'mark-done':
-        if (item.itemType === 'commitment') {
+      case "mark-done":
+        if (item.itemType === "commitment") {
           onToggle(item.id);
 
           // Update streak and completion count
@@ -219,119 +255,159 @@ export const NowScreen = ({
           setCompletionStreak(newStreak);
 
           // Determine if we should celebrate
-          const isHighImpact = item.impact === 'high';
+          const isHighImpact = item.impact === "high";
           const shouldShowCelebration = shouldCelebrate({
             completedToday: newCompletedToday,
             streak: newStreak,
-            isHighImpact
+            isHighImpact,
           });
 
           // Trigger haptic feedback if available
-          if (typeof window !== 'undefined' && (window as any).electronAPI?.triggerHaptic) {
-            (window as any).electronAPI.triggerHaptic(shouldShowCelebration ? 'success' : 'light');
+          if (
+            typeof window !== "undefined" &&
+            (window as any).electronAPI?.triggerHaptic
+          ) {
+            (window as any).electronAPI.triggerHaptic(
+              shouldShowCelebration ? "success" : "light",
+            );
           }
 
           // Show appropriate toast
           if (shouldShowCelebration) {
             toast.success(getCelebratoryQuote(), {
-              description: isHighImpact ? 'High-impact item completed!' : `${newStreak} in a row!`,
-              duration: 4000
+              description: isHighImpact
+                ? "High-impact item completed!"
+                : `${newStreak} in a row!`,
+              duration: 4000,
             });
             // Play celebration sound if available
-            if (typeof window !== 'undefined' && (window as any).electronAPI?.playSound) {
-              (window as any).electronAPI.playSound('celebrate');
+            if (
+              typeof window !== "undefined" &&
+              (window as any).electronAPI?.playSound
+            ) {
+              (window as any).electronAPI.playSound("celebrate");
             }
           } else {
-            toast.success(getContextualQuote({
-              timeOfDay: getTimeOfDay(),
-              completionStreak: newStreak,
-              itemType: item.itemType,
-              completedToday: newCompletedToday
-            }), {
-              description: 'Commitment marked as done.',
-              duration: 3000
-            });
+            toast.success(
+              getContextualQuote({
+                timeOfDay: getTimeOfDay(),
+                completionStreak: newStreak,
+                itemType: item.itemType,
+                completedToday: newCompletedToday,
+              }),
+              {
+                description: "Commitment marked as done.",
+                duration: 3000,
+              },
+            );
             // Play subtle complete sound for regular completions
-            if (typeof window !== 'undefined' && (window as any).electronAPI?.playSound) {
-              (window as any).electronAPI.playSound('complete');
+            if (
+              typeof window !== "undefined" &&
+              (window as any).electronAPI?.playSound
+            ) {
+              (window as any).electronAPI.playSound("complete");
             }
           }
         }
         break;
-      case 'snooze':
+      case "snooze":
         // Haptic + sound for snooze action
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.triggerHaptic) {
-          (window as any).electronAPI.triggerHaptic('light');
+        if (
+          typeof window !== "undefined" &&
+          (window as any).electronAPI?.triggerHaptic
+        ) {
+          (window as any).electronAPI.triggerHaptic("light");
         }
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.playSound) {
-          (window as any).electronAPI.playSound('snooze');
+        if (
+          typeof window !== "undefined" &&
+          (window as any).electronAPI?.playSound
+        ) {
+          (window as any).electronAPI.playSound("snooze");
         }
-        toast.info(getOperatorQuote('snooze'), {
+        toast.info(getOperatorQuote("snooze"), {
           description: "We'll remind you tomorrow.",
-          duration: 3000
+          duration: 3000,
         });
         break;
-      case 'delegate':
+      case "delegate":
         // Haptic + sound for delegate action
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.triggerHaptic) {
-          (window as any).electronAPI.triggerHaptic('medium');
+        if (
+          typeof window !== "undefined" &&
+          (window as any).electronAPI?.triggerHaptic
+        ) {
+          (window as any).electronAPI.triggerHaptic("medium");
         }
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.playSound) {
-          (window as any).electronAPI.playSound('delegate');
+        if (
+          typeof window !== "undefined" &&
+          (window as any).electronAPI?.playSound
+        ) {
+          (window as any).electronAPI.playSound("delegate");
         }
-        toast(getOperatorQuote('delegate'), {
-          description: 'Select a team member to hand this off to.',
-          duration: 3000
+        toast(getOperatorQuote("delegate"), {
+          description: "Select a team member to hand this off to.",
+          duration: 3000,
         });
         break;
-      case 'acknowledge':
+      case "acknowledge":
         // Haptic + sound for acknowledge
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.triggerHaptic) {
-          (window as any).electronAPI.triggerHaptic('success');
+        if (
+          typeof window !== "undefined" &&
+          (window as any).electronAPI?.triggerHaptic
+        ) {
+          (window as any).electronAPI.triggerHaptic("success");
         }
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.playSound) {
-          (window as any).electronAPI.playSound('success');
+        if (
+          typeof window !== "undefined" &&
+          (window as any).electronAPI?.playSound
+        ) {
+          (window as any).electronAPI.playSound("success");
         }
-        toast.success('Alert acknowledged', {
+        toast.success("Alert acknowledged", {
           description: "We've noted your acknowledgment.",
-          duration: 2000
+          duration: 2000,
         });
         break;
-      case 'join-meeting':
-        if (item.itemType === 'meeting' && item.meetingLink) {
-          window.open(item.meetingLink, '_blank');
+      case "join-meeting":
+        if (item.itemType === "meeting" && item.meetingLink) {
+          window.open(item.meetingLink, "_blank");
         }
         break;
-      case 'view-source':
-      case 'see-thread':
-      case 'show-history':
-      case 'view-details':
-      case 'view-history':
+      case "view-source":
+      case "see-thread":
+      case "show-history":
+      case "view-details":
+      case "view-history":
         setFocusedItem(item);
         break;
-      case 'send-message':
+      case "send-message":
         // For relationship items - open email or show compose
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.triggerHaptic) {
-          (window as any).electronAPI.triggerHaptic('light');
+        if (
+          typeof window !== "undefined" &&
+          (window as any).electronAPI?.triggerHaptic
+        ) {
+          (window as any).electronAPI.triggerHaptic("light");
         }
-        if (typeof window !== 'undefined' && (window as any).electronAPI?.playSound) {
-          (window as any).electronAPI.playSound('pop');
+        if (
+          typeof window !== "undefined" &&
+          (window as any).electronAPI?.playSound
+        ) {
+          (window as any).electronAPI.playSound("pop");
         }
-        if (item.itemType === 'relationship') {
+        if (item.itemType === "relationship") {
           toast.success(`Opening message to ${item.contactName}`, {
-            description: item.suggestedAction || 'Draft a personalized message',
-            duration: 3000
+            description: item.suggestedAction || "Draft a personalized message",
+            duration: 3000,
           });
         }
         break;
-      case 'share-card':
-        toast.success('Card shared', {
-          description: 'A link has been copied to your clipboard.',
-          duration: 2000
+      case "share-card":
+        toast.success("Card shared", {
+          description: "A link has been copied to your clipboard.",
+          duration: 2000,
         });
         break;
       default:
-        console.log('Action:', actionId, 'on item:', item.id);
+        console.log("Action:", actionId, "on item:", item.id);
     }
   };
 
@@ -345,7 +421,7 @@ export const NowScreen = ({
 
   const handleJoinMeeting = () => {
     if (nextMeeting?.meetingLink) {
-      window.open(nextMeeting.meetingLink, '_blank');
+      window.open(nextMeeting.meetingLink, "_blank");
     }
   };
 
@@ -354,7 +430,7 @@ export const NowScreen = ({
       // Open the meeting as a focused item to show its brief/details
       const meetingItem: AttentionItem = {
         ...nextMeeting,
-        itemType: 'meeting' as const
+        itemType: "meeting" as const,
       };
       setFocusedItem(meetingItem);
     }
@@ -448,16 +524,10 @@ export const NowScreen = ({
       />
 
       {/* Source Drawer */}
-      <SourceDrawer
-        item={evidenceItem}
-        onClose={() => setEvidenceItem(null)}
-      />
+      <SourceDrawer item={evidenceItem} onClose={() => setEvidenceItem(null)} />
 
       {/* Chat Interface - only for keyboard shortcut, persistent bar is in App.tsx */}
-      <ChatInterface
-        isOpen={isChatOpen}
-        onClose={() => setIsChatOpen(false)}
-      />
+      <ChatInterface isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 };

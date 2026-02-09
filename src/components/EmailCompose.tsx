@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   X,
   ChevronUp,
@@ -9,9 +9,9 @@ import {
   Paperclip,
   Link2,
   Bold,
-  List
-} from 'lucide-react';
-import { AttentionItem } from '../types';
+  List,
+} from "lucide-react";
+import { AttentionItem } from "../types";
 
 interface EmailComposeProps {
   isOpen: boolean;
@@ -23,23 +23,28 @@ interface EmailComposeProps {
 }
 
 // Get suggested recipients based on item context
-function getSuggestedRecipients(item: AttentionItem | null | undefined): string[] {
+function getSuggestedRecipients(
+  item: AttentionItem | null | undefined,
+): string[] {
   if (!item) return [];
 
   const recipients: string[] = [];
 
   // For relationship items, add the contact first
-  if (item.itemType === 'relationship') {
-    const contactEmail = item.contactName?.toLowerCase().replace(/\s+/g, '.') + '@' +
-      (item.contactCompany?.toLowerCase().replace(/\s+/g, '') || 'company') + '.com';
+  if (item.itemType === "relationship") {
+    const contactEmail =
+      item.contactName?.toLowerCase().replace(/\s+/g, ".") +
+      "@" +
+      (item.contactCompany?.toLowerCase().replace(/\s+/g, "") || "company") +
+      ".com";
     recipients.push(`${item.contactName} <${contactEmail}>`);
   }
 
   // Add collaborators as potential recipients
   if (item.collaborators) {
-    item.collaborators.forEach(collab => {
-      const name = collab.replace(/\s*\(.*\)/, '').trim();
-      const emailName = name.toLowerCase().replace(/\s+/g, '.');
+    item.collaborators.forEach((collab) => {
+      const name = collab.replace(/\s*\(.*\)/, "").trim();
+      const emailName = name.toLowerCase().replace(/\s+/g, ".");
       recipients.push(`${name} <${emailName}@company.com>`);
     });
   }
@@ -49,44 +54,53 @@ function getSuggestedRecipients(item: AttentionItem | null | undefined): string[
 
 // Get natural subject line - written as if from the user
 function getSuggestedSubject(item: AttentionItem | null | undefined): string {
-  if (!item) return '';
+  if (!item) return "";
 
   switch (item.itemType) {
-    case 'relationship':
-      if (item.title.includes('follow-up') || item.title.includes('asked for')) {
-        return 'Following up on our conversation';
+    case "relationship":
+      if (
+        item.title.includes("follow-up") ||
+        item.title.includes("asked for")
+      ) {
+        return "Following up on our conversation";
       }
-      if (item.title.includes('check-in') || item.title.includes('overdue')) {
-        return 'Quick check-in';
+      if (item.title.includes("check-in") || item.title.includes("overdue")) {
+        return "Quick check-in";
       }
-      if (item.title.includes('announced') || item.title.includes('initiative')) {
-        return 'Congrats on the news!';
+      if (
+        item.title.includes("announced") ||
+        item.title.includes("initiative")
+      ) {
+        return "Congrats on the news!";
       }
-      return 'Wanted to connect';
+      return "Wanted to connect";
 
-    case 'commitment':
-      if (item.title.includes('review') || item.title.includes('approval')) {
-        return 'Update on the review';
+    case "commitment":
+      if (item.title.includes("review") || item.title.includes("approval")) {
+        return "Update on the review";
       }
-      if (item.title.includes('hiring') || item.title.includes('plan')) {
-        return 'Hiring plan update';
+      if (item.title.includes("hiring") || item.title.includes("plan")) {
+        return "Hiring plan update";
       }
-      return 'Quick update';
+      return "Quick update";
 
-    case 'alert':
-      if (item.title.includes('latency') || item.title.includes('incident')) {
-        return 'Status update on the incident';
+    case "alert":
+      if (item.title.includes("latency") || item.title.includes("incident")) {
+        return "Status update on the incident";
       }
-      if (item.title.includes('misaligned') || item.title.includes('alignment')) {
-        return 'Syncing on next steps';
+      if (
+        item.title.includes("misaligned") ||
+        item.title.includes("alignment")
+      ) {
+        return "Syncing on next steps";
       }
-      return 'Following up on this';
+      return "Following up on this";
 
-    case 'meeting':
-      return 'Re: ' + item.title;
+    case "meeting":
+      return "Re: " + item.title;
 
     default:
-      return 'Quick note';
+      return "Quick note";
   }
 }
 
@@ -96,13 +110,13 @@ export const EmailCompose: React.FC<EmailComposeProps> = ({
   item,
   prefillTo,
   prefillSubject,
-  prefillBody
+  prefillBody,
 }) => {
-  const [to, setTo] = useState('');
-  const [cc, setCc] = useState('');
-  const [bcc, setBcc] = useState('');
-  const [subject, setSubject] = useState('');
-  const [body, setBody] = useState('');
+  const [to, setTo] = useState("");
+  const [cc, setCc] = useState("");
+  const [bcc, setBcc] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isDrafting, setIsDrafting] = useState(false);
@@ -112,9 +126,9 @@ export const EmailCompose: React.FC<EmailComposeProps> = ({
   useEffect(() => {
     if (isOpen) {
       const recipients = getSuggestedRecipients(item);
-      setTo(prefillTo || (recipients.length > 0 ? recipients[0] : ''));
+      setTo(prefillTo || (recipients.length > 0 ? recipients[0] : ""));
       setSubject(prefillSubject || getSuggestedSubject(item));
-      setBody(prefillBody || '');
+      setBody(prefillBody || "");
       setShowCcBcc(false);
       setIsMinimized(false);
       setIsDrafting(false);
@@ -152,15 +166,15 @@ export const EmailCompose: React.FC<EmailComposeProps> = ({
     // Fall back to item context
     if (!item) return null;
 
-    if (item.itemType === 'relationship' && item.contactName) {
-      return item.contactName.split(' ')[0];
+    if (item.itemType === "relationship" && item.contactName) {
+      return item.contactName.split(" ")[0];
     }
 
     // Check collaborators for a name
     if (item.collaborators && item.collaborators.length > 0) {
       const firstCollab = item.collaborators[0];
-      const name = firstCollab.replace(/\s*\(.*\)/, '').trim();
-      return name.split(' ')[0];
+      const name = firstCollab.replace(/\s*\(.*\)/, "").trim();
+      return name.split(" ")[0];
     }
 
     return null;
@@ -168,30 +182,36 @@ export const EmailCompose: React.FC<EmailComposeProps> = ({
 
   // Generate draft based on context - written as a real email to the recipient
   function generateDraftEmail(item: AttentionItem | null | undefined): string {
-    if (!item) return '';
+    if (!item) return "";
 
     const recipientName = getRecipientFirstName();
-    const greeting = recipientName ? `Hi ${recipientName},` : 'Hi,';
+    const greeting = recipientName ? `Hi ${recipientName},` : "Hi,";
 
     switch (item.itemType) {
-      case 'relationship':
-        if (item.title.includes('follow-up') || item.title.includes('asked for')) {
+      case "relationship":
+        if (
+          item.title.includes("follow-up") ||
+          item.title.includes("asked for")
+        ) {
           return `${greeting}
 
 Apologies for the delay—wanted to make sure I had everything together before getting back to you.
 
-${item.suggestedAction ? `Here's what I have for you: ` : ''}
+${item.suggestedAction ? `Here's what I have for you: ` : ""}
 
 Let me know if you have any questions, or if it would be easier to hop on a quick call.
 
 Best,`;
         }
-        if (item.title.includes('announced') || item.title.includes('initiative')) {
+        if (
+          item.title.includes("announced") ||
+          item.title.includes("initiative")
+        ) {
           return `${greeting}
 
 Just saw the news about ${item.contactCompany}'s announcement—congratulations! That sounds like a big initiative.
 
-${item.recentContext ? `I remember we talked about ${item.recentContext.toLowerCase()}—this seems like it could be related. ` : ''}Would love to hear more about what you're working on if you have time for a quick catch-up.
+${item.recentContext ? `I remember we talked about ${item.recentContext.toLowerCase()}—this seems like it could be related. ` : ""}Would love to hear more about what you're working on if you have time for a quick catch-up.
 
 Best,`;
         }
@@ -199,15 +219,18 @@ Best,`;
 
 Hope you're doing well! It's been a little while since we connected, and I wanted to check in.
 
-${item.recentContext ? `Last time we spoke, we were discussing ${item.recentContext.toLowerCase()}. How has that been going?` : 'How have things been on your end?'}
+${item.recentContext ? `Last time we spoke, we were discussing ${item.recentContext.toLowerCase()}. How has that been going?` : "How have things been on your end?"}
 
 Would be great to catch up if you have time this week or next.
 
 Best,`;
 
-      case 'commitment':
+      case "commitment":
         // Check for specific contexts to make it more personal
-        if (item.title.toLowerCase().includes('hiring plan') || item.title.toLowerCase().includes('cto')) {
+        if (
+          item.title.toLowerCase().includes("hiring plan") ||
+          item.title.toLowerCase().includes("cto")
+        ) {
           return `${greeting}
 
 Just finished reviewing the hiring plan—wanted to get this to you before end of day as promised.
@@ -220,7 +243,10 @@ Let me know if you need anything else before the board meeting.
 
 Best,`;
         }
-        if (item.title.toLowerCase().includes('waiting') || item.title.toLowerCase().includes('approval')) {
+        if (
+          item.title.toLowerCase().includes("waiting") ||
+          item.title.toLowerCase().includes("approval")
+        ) {
           return `${greeting}
 
 Apologies for the delay on this—I've reviewed everything and we're good to go.
@@ -231,7 +257,10 @@ Let me know if you have any questions.
 
 Best,`;
         }
-        if (item.title.toLowerCase().includes('retrospective') || item.title.toLowerCase().includes('retro')) {
+        if (
+          item.title.toLowerCase().includes("retrospective") ||
+          item.title.toLowerCase().includes("retro")
+        ) {
           return `${greeting}
 
 Here's the Q1 retrospective for the team. Tried to keep it actionable.
@@ -244,14 +273,17 @@ Best,`;
         }
         return `${greeting}
 
-Quick update on this—${item.context ? item.context.toLowerCase() : 'wanted to keep you in the loop'}.
+Quick update on this—${item.context ? item.context.toLowerCase() : "wanted to keep you in the loop"}.
 
 Let me know if you need anything else from my end.
 
 Best,`;
 
-      case 'alert':
-        if (item.title.toLowerCase().includes('misalign') || item.title.toLowerCase().includes('alignment')) {
+      case "alert":
+        if (
+          item.title.toLowerCase().includes("misalign") ||
+          item.title.toLowerCase().includes("alignment")
+        ) {
           return `${greeting}
 
 Wanted to get ahead of this before our next sync. I think we're close to alignment—here's my take on where we should land:
@@ -262,12 +294,15 @@ Happy to discuss if you see it differently. Would be good to get this resolved t
 
 Best,`;
         }
-        if (item.title.toLowerCase().includes('latency') || item.title.toLowerCase().includes('incident')) {
+        if (
+          item.title.toLowerCase().includes("latency") ||
+          item.title.toLowerCase().includes("incident")
+        ) {
           return `${greeting}
 
 Quick update on the situation—here's where we are:
 
-• What happened: ${item.description || '[Brief summary]'}
+• What happened: ${item.description || "[Brief summary]"}
 • Current status: [Update]
 • Next steps: [What we're doing]
 
@@ -275,7 +310,10 @@ I'll keep you posted as we make progress. Let me know if you have questions.
 
 Best,`;
         }
-        if (item.title.toLowerCase().includes('budget') || item.title.toLowerCase().includes('spend')) {
+        if (
+          item.title.toLowerCase().includes("budget") ||
+          item.title.toLowerCase().includes("spend")
+        ) {
           return `${greeting}
 
 Flagging this for visibility—we're running over on cloud spend and I wanted to loop you in before we hit the approval threshold.
@@ -292,7 +330,7 @@ Best,`;
 
 Wanted to share a quick update on this and get your thoughts.
 
-${item.description || '[Details]'}
+${item.description || "[Details]"}
 
 What do you think makes sense for next steps?
 
@@ -308,7 +346,7 @@ Best,`;
   }
 
   const handleSend = () => {
-    console.log('Sending email:', { to, cc, bcc, subject, body });
+    console.log("Sending email:", { to, cc, bcc, subject, body });
     onClose();
   };
 
@@ -326,29 +364,36 @@ Best,`;
         }}
       >
         {/* Backdrop */}
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={onClose}
+        />
 
         {/* Email Compose Window - Centered and larger */}
         <motion.div
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className={`relative w-full max-w-3xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700/50 overflow-hidden ${isMinimized ? 'h-14' : ''}`}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className={`relative w-full max-w-3xl bg-card dark:bg-neutral-900 rounded-2xl shadow-2xl border border-border overflow-hidden ${isMinimized ? "h-14" : ""}`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
-            <h2 className="text-xl font-medium text-zinc-900 dark:text-white">New Message</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 className="text-xl font-medium text-foreground">New Message</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
-                className="p-1.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
               >
-                {isMinimized ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                {isMinimized ? (
+                  <ChevronUp size={18} />
+                ) : (
+                  <ChevronDown size={18} />
+                )}
               </button>
               <button
                 onClick={onClose}
-                className="p-1.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
               >
                 <X size={18} />
               </button>
@@ -358,22 +403,25 @@ Best,`;
           {!isMinimized && (
             <>
               {/* Email Fields */}
-              <div className="px-6 py-2 border-b border-zinc-200/50 dark:border-zinc-800/50">
+              <div className="px-6 py-2 border-b border-border/50">
                 {/* To Field */}
-                <div className="flex items-center gap-4 py-3 border-b border-zinc-200/30 dark:border-zinc-800/30">
-                  <span className="text-sm text-zinc-500 w-14">To</span>
+                <div className="flex items-center gap-4 py-3 border-b border-border/30">
+                  <span className="text-sm text-muted-foreground w-14">To</span>
                   <input
                     type="text"
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
                     placeholder="Recipients"
-                    className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 outline-none"
+                    className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none"
                   />
                   <button
                     onClick={() => setShowCcBcc(!showCcBcc)}
-                    className="p-1 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors"
+                    className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    <ChevronDown size={16} className={`transition-transform ${showCcBcc ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      size={16}
+                      className={`transition-transform ${showCcBcc ? "rotate-180" : ""}`}
+                    />
                   </button>
                 </div>
 
@@ -382,29 +430,33 @@ Best,`;
                   {showCcBcc && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
+                      animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="flex items-center gap-4 py-3 border-b border-zinc-200/30 dark:border-zinc-800/30">
-                        <span className="text-sm text-zinc-500 w-14">Cc</span>
+                      <div className="flex items-center gap-4 py-3 border-b border-border/30">
+                        <span className="text-sm text-muted-foreground w-14">
+                          Cc
+                        </span>
                         <input
                           type="text"
                           value={cc}
                           onChange={(e) => setCc(e.target.value)}
                           placeholder="Carbon copy"
-                          className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 outline-none"
+                          className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none"
                         />
                       </div>
-                      <div className="flex items-center gap-4 py-3 border-b border-zinc-200/30 dark:border-zinc-800/30">
-                        <span className="text-sm text-zinc-500 w-14">Bcc</span>
+                      <div className="flex items-center gap-4 py-3 border-b border-border/30">
+                        <span className="text-sm text-muted-foreground w-14">
+                          Bcc
+                        </span>
                         <input
                           type="text"
                           value={bcc}
                           onChange={(e) => setBcc(e.target.value)}
                           placeholder="Blind carbon copy"
-                          className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 outline-none"
+                          className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none"
                         />
                       </div>
                     </motion.div>
@@ -413,13 +465,15 @@ Best,`;
 
                 {/* Subject Field */}
                 <div className="flex items-center gap-4 py-3">
-                  <span className="text-sm text-zinc-500 w-14">Subject</span>
+                  <span className="text-sm text-muted-foreground w-14">
+                    Subject
+                  </span>
                   <input
                     type="text"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder="Subject"
-                    className="flex-1 bg-transparent text-sm text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 outline-none"
+                    className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none"
                   />
                 </div>
               </div>
@@ -429,10 +483,14 @@ Best,`;
                 {/* Tips - show when body is empty */}
                 {!body && !isDrafting && (
                   <div className="space-y-2 mb-4">
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                      Tip: Click <span className="text-blue-600 dark:text-blue-400 font-semibold">Draft with Sentra</span> to have it written for you contextually
+                    <p className="text-sm text-muted-foreground">
+                      Tip: Click{" "}
+                      <span className="text-accent font-semibold">
+                        Draft with Sentra
+                      </span>{" "}
+                      to have it written for you contextually
                     </p>
-                    <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                       Your draft will be saved here until you send it
                     </p>
                   </div>
@@ -440,7 +498,7 @@ Best,`;
 
                 {/* Drafting indicator */}
                 {isDrafting && (
-                  <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400 mb-4">
+                  <div className="flex items-center gap-2 text-sm text-accent mb-4">
                     <Sparkles size={14} className="animate-pulse" />
                     <span>Sentra is drafting...</span>
                   </div>
@@ -450,24 +508,24 @@ Best,`;
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
                   placeholder="..."
-                  className="w-full h-64 bg-transparent text-sm text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 outline-none resize-none leading-relaxed"
+                  className="w-full h-64 bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none resize-none leading-relaxed"
                 />
               </div>
 
               {/* Footer Toolbar */}
-              <div className="px-6 py-4 border-t border-zinc-200 dark:border-zinc-800">
+              <div className="px-6 py-4 border-t border-border">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   {/* Left Actions */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={handleSend}
-                      className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                      className="px-5 py-2 text-sm font-medium text-white bg-accent hover:bg-accent/90 rounded-[7px] transition-colors"
                     >
                       Send
                     </button>
                     <button
                       onClick={() => setShowSchedule(!showSchedule)}
-                      className="px-4 py-2 text-sm text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                      className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-[7px] transition-colors"
                     >
                       Send later
                     </button>
@@ -477,7 +535,7 @@ Best,`;
                   <button
                     onClick={handleSentraDraft}
                     disabled={isDrafting}
-                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-lg shadow-md transition-all disabled:opacity-50 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-[7px] shadow-md transition-all disabled:opacity-50 bg-accent hover:bg-accent/90 text-white"
                   >
                     <Sparkles size={16} className="text-white/80" />
                     Draft with Sentra
@@ -485,16 +543,28 @@ Best,`;
 
                   {/* Right Actions */}
                   <div className="flex items-center gap-1">
-                    <button className="p-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Bold">
+                    <button
+                      className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-[7px] transition-colors"
+                      title="Bold"
+                    >
                       <Bold size={16} />
                     </button>
-                    <button className="p-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="List">
+                    <button
+                      className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-[7px] transition-colors"
+                      title="List"
+                    >
                       <List size={16} />
                     </button>
-                    <button className="p-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Link">
+                    <button
+                      className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-[7px] transition-colors"
+                      title="Link"
+                    >
                       <Link2 size={16} />
                     </button>
-                    <button className="p-2.5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors" title="Attach">
+                    <button
+                      className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-[7px] transition-colors"
+                      title="Attach"
+                    >
                       <Paperclip size={16} />
                     </button>
                   </div>
@@ -506,19 +576,21 @@ Best,`;
                 {showSchedule && (
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="border-t border-zinc-200 dark:border-zinc-800 px-6 py-4 bg-zinc-100/50 dark:bg-zinc-800/50"
+                    className="border-t border-border px-6 py-4 bg-muted/50"
                   >
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">Schedule send</p>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Schedule send
+                    </p>
                     <div className="flex gap-2">
-                      <button className="px-4 py-2 text-sm bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-900 dark:text-white rounded-lg transition-colors">
+                      <button className="px-4 py-2 text-sm bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-foreground rounded-[7px] transition-colors">
                         Tomorrow 8 AM
                       </button>
-                      <button className="px-4 py-2 text-sm bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-900 dark:text-white rounded-lg transition-colors">
+                      <button className="px-4 py-2 text-sm bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-foreground rounded-[7px] transition-colors">
                         Monday 9 AM
                       </button>
-                      <button className="px-4 py-2 text-sm bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-900 dark:text-white rounded-lg transition-colors flex items-center gap-2">
+                      <button className="px-4 py-2 text-sm bg-neutral-200 dark:bg-neutral-700 hover:bg-neutral-300 dark:hover:bg-neutral-600 text-foreground rounded-[7px] transition-colors flex items-center gap-2">
                         <Clock size={14} />
                         Pick date & time
                       </button>

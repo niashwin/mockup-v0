@@ -1,16 +1,38 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import React from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
-  X, Calendar, Clock, MapPin, Video, Users, FileText, CheckCircle2,
-  MessageSquare, Share2, ChevronDown, Lock, Link2, UsersRound
-} from 'lucide-react';
-import { MeetingBrief } from '../types';
+  X,
+  Calendar,
+  Clock,
+  MapPin,
+  Video,
+  FileText,
+  CheckCircle2,
+  MessageSquare,
+  Share2,
+  Lock,
+  UsersRound,
+} from "lucide-react";
+import { MeetingBrief } from "../types";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "./ui/hover-card";
+
+const NEUTRAL_AVATAR =
+  "from-neutral-300 to-neutral-400 dark:from-neutral-600 dark:to-neutral-700";
+
+const getInitials = (name: string): string =>
+  name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+
+const getPersonColor = (_name: string): string => NEUTRAL_AVATAR;
 
 interface MeetingDetailModalProps {
   meeting: MeetingBrief | null;
   onClose: () => void;
   onPersonClick: (personName: string) => void;
-  onViewTranscript: (meetingId: string) => void;
+  onViewTranscript: (meetingId: string, timestamp?: string) => void;
   onViewReport: (reportId: string) => void;
   onTogglePrivacy?: (meetingId: string) => void;
 }
@@ -22,16 +44,10 @@ interface EnhancedActionItem {
   assignee: string;
   dueDate: string;
   completed: boolean;
+  transcriptTimestamp?: string;
   affectsDownstream?: string;
   unblocks?: string;
   riskIfIgnored?: string;
-}
-
-// Brief links generated from this meeting
-interface GeneratedBrief {
-  id: string;
-  title: string;
-  status: 'active' | 'archived';
 }
 
 export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
@@ -40,69 +56,84 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
   onPersonClick,
   onViewTranscript,
   onViewReport,
-  onTogglePrivacy
+  onTogglePrivacy,
 }) => {
-  const [showBriefsSection, setShowBriefsSection] = useState(true);
-
   if (!meeting) return null;
   const isPrivate = !!meeting.isPrivate;
 
   // Enhanced meeting brief - the "first screenful" content
   const meetingBrief = {
     purpose: `Align on ${meeting.title.toLowerCase()} priorities and identify action items for the coming week.`,
-    humanRecognition: "This meeting clarified ownership across teams and set clear next steps."
+    humanRecognition:
+      "This meeting clarified ownership across teams and set clear next steps.",
   };
-
-  // Generated briefs from this meeting (bridge to Briefs)
-  const generatedBriefs: GeneratedBrief[] = [
-    { id: 'b1', title: 'Q3 Roadmap Priorities', status: 'active' },
-    { id: 'b2', title: 'Cross-functional Alignment', status: 'active' }
-  ];
 
   // Enhanced action items with context
   const mockActionItems: EnhancedActionItem[] = [
     {
       id: 1,
-      text: 'Complete mobile app beta testing feedback review',
-      assignee: 'Sarah Chen',
-      dueDate: 'Feb 5',
+      text: "Complete mobile app beta testing feedback review",
+      assignee: "Sarah Chen",
+      dueDate: "Feb 5",
       completed: false,
-      affectsDownstream: 'Product launch timeline',
-      unblocks: 'Final QA sign-off',
-      riskIfIgnored: 'Launch delay by 1 week'
+      transcriptTimestamp: "01:45",
+      affectsDownstream: "Product launch timeline",
+      unblocks: "Final QA sign-off",
+      riskIfIgnored: "Launch delay by 1 week",
     },
     {
       id: 2,
-      text: 'Update Q3 roadmap based on user research findings',
-      assignee: 'Mike Johnson',
-      dueDate: 'Feb 6',
+      text: "Update Q3 roadmap based on user research findings",
+      assignee: "Mike Johnson",
+      dueDate: "Feb 6",
       completed: true,
-      affectsDownstream: 'Engineering sprint planning',
-      unblocks: 'Feature prioritization meeting'
+      transcriptTimestamp: "02:15",
+      affectsDownstream: "Engineering sprint planning",
+      unblocks: "Feature prioritization meeting",
     },
     {
       id: 3,
-      text: 'Schedule follow-up with design team on new components',
-      assignee: 'Emma Davis',
-      dueDate: 'Feb 8',
+      text: "Schedule follow-up with design team on new components",
+      assignee: "Emma Davis",
+      dueDate: "Feb 8",
       completed: false,
-      affectsDownstream: 'Design system update',
-      unblocks: 'Component library v2'
+      transcriptTimestamp: "03:45",
+      affectsDownstream: "Design system update",
+      unblocks: "Component library v2",
     },
     {
       id: 4,
-      text: 'Share meeting notes with broader team via Slack',
-      assignee: 'Alex Rivera',
-      dueDate: 'Feb 4',
+      text: "Share meeting notes with broader team via Slack",
+      assignee: "Alex Rivera",
+      dueDate: "Feb 4",
       completed: true,
-      affectsDownstream: 'Team awareness'
+      transcriptTimestamp: "04:35",
+      affectsDownstream: "Team awareness",
     },
   ];
 
   const mockKeyDecisions = [
-    'Approved budget increase for Q3 marketing campaign',
-    'Decided to move mobile app launch from end of Q3 to mid-Q3',
-    'Agreed to implement weekly design reviews starting next sprint',
+    {
+      text: "Approved budget increase for Q3 marketing campaign",
+      transcriptTimestamp: "00:45",
+      transcriptExcerpt:
+        "We've successfully migrated 80% of our core services to the new cluster. We're seeing about a 30% reduction in latency.",
+      speaker: "Sarah Chen",
+    },
+    {
+      text: "Decided to move mobile app launch from end of Q3 to mid-Q3",
+      transcriptTimestamp: "02:15",
+      transcriptExcerpt:
+        "Regarding the Zinc-based aesthetic for the new Sentra dashboard\u2014how's the glassmorphic implementation going?",
+      speaker: "Alex Lewis",
+    },
+    {
+      text: "Agreed to implement weekly design reviews starting next sprint",
+      transcriptTimestamp: "03:30",
+      transcriptExcerpt:
+        "I noticed some clipping on the timeline bubbles in the last build. Let's make sure the overflow is handled gracefully.",
+      speaker: "Alex Lewis",
+    },
   ];
 
   return (
@@ -123,44 +154,65 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+            transition={{ type: "spring", damping: 30, stiffness: 400 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-6 pointer-events-none"
           >
-            <div className={`w-full max-w-4xl max-h-[85vh] bg-white dark:bg-zinc-900 border shadow-2xl shadow-black/20 rounded-[2rem] overflow-hidden flex flex-col pointer-events-auto relative ${isPrivate ? 'border-orange-200/70 dark:border-orange-900/40 ring-1 ring-orange-200/40 dark:ring-orange-900/30' : 'border-[color:var(--app-border)]'}`}>
-
+            <div
+              className={`w-full max-w-4xl max-h-[85vh] bg-card dark:bg-neutral-900 border shadow-2xl shadow-black/20 rounded-[2rem] overflow-hidden flex flex-col pointer-events-auto relative border-border`}
+            >
               {/* Header */}
-              <div className={`shrink-0 px-8 py-6 border-b border-zinc-100 dark:border-zinc-800/50 relative z-10 ${isPrivate ? 'bg-orange-50/60 dark:bg-orange-900/20' : 'bg-white dark:bg-zinc-900'}`}>
-                {/* Decorative gradient */}
-                <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 rounded-full blur-3xl pointer-events-none ${isPrivate ? 'bg-gradient-to-r from-orange-400/15 via-amber-400/10 to-rose-400/10' : 'bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-fuchsia-500/10'}`} />
-
+              <div className="shrink-0 px-8 py-6 border-b border-border relative z-10 bg-card dark:bg-neutral-900">
                 <div className="relative">
                   <div className="flex items-start justify-between mb-4 gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          meeting.status === 'completed' ? 'bg-zinc-400' :
-                          meeting.status === 'in_progress' ? 'bg-green-500 animate-pulse' :
-                          'bg-blue-500'
-                        }`} />
-                        <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-                          {meeting.status === 'completed' ? 'Completed' :
-                           meeting.status === 'in_progress' ? 'In Progress' :
-                           'Scheduled'}
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            meeting.status === "completed"
+                              ? "bg-muted-foreground"
+                              : meeting.status === "in_progress"
+                                ? "bg-green-500 animate-pulse"
+                                : "bg-blue-500"
+                          }`}
+                        />
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                          {meeting.status === "completed"
+                            ? "Completed"
+                            : meeting.status === "in_progress"
+                              ? "In Progress"
+                              : "Scheduled"}
                         </span>
-                        <span className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
-                          isPrivate
-                            ? 'text-orange-600 bg-orange-50 dark:bg-orange-900/20 border-orange-100 dark:border-orange-900/30'
-                            : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-900/30'
-                        }`}>
-                          {isPrivate ? <Lock size={10} /> : <UsersRound size={10} />}
-                          {isPrivate ? 'Private' : 'Company-wide'}
+                        <span
+                          className={`flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
+                            isPrivate
+                              ? "text-muted-foreground bg-muted border-border"
+                              : "text-muted-foreground bg-muted border-border"
+                          }`}
+                        >
+                          {isPrivate ? (
+                            <Lock size={10} />
+                          ) : (
+                            <UsersRound size={10} />
+                          )}
+                          {isPrivate ? "Private" : "Public"}
                         </span>
                       </div>
-                      <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">{meeting.title}</h2>
-                      <div className="flex items-center gap-4 text-sm text-zinc-500">
+                      <h2 className="text-2xl font-semibold text-foreground mb-2">
+                        {meeting.title}
+                      </h2>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                           <Calendar size={14} />
-                          <span>{new Date(meeting.time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                          <span>
+                            {new Date(meeting.time).toLocaleDateString(
+                              "en-US",
+                              {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )}
+                          </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <Clock size={14} />
@@ -168,7 +220,11 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
                         </div>
                         {meeting.location && (
                           <div className="flex items-center gap-1.5">
-                            {meeting.location.includes('Zoom') ? <Video size={14} /> : <MapPin size={14} />}
+                            {meeting.location.includes("Zoom") ? (
+                              <Video size={14} />
+                            ) : (
+                              <MapPin size={14} />
+                            )}
                             <span>{meeting.location}</span>
                           </div>
                         )}
@@ -178,20 +234,24 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
                       {onTogglePrivacy && (
                         <button
                           onClick={() => onTogglePrivacy(meeting.id)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                          className={`px-3 py-1.5 rounded-[7px] text-xs font-bold border transition-all flex items-center gap-1.5 ${
                             isPrivate
-                              ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 border-orange-100 dark:border-orange-900/30 hover:bg-orange-100/70'
-                              : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 border-emerald-100 dark:border-emerald-900/30 hover:bg-emerald-100/70'
+                              ? "bg-muted text-muted-foreground border-border hover:bg-muted/80"
+                              : "bg-muted text-muted-foreground border-border hover:bg-muted/80"
                           }`}
-                          title={isPrivate ? 'Make company-wide' : 'Make private'}
+                          title={isPrivate ? "Make public" : "Make private"}
                         >
-                          {isPrivate ? <Lock size={12} /> : <UsersRound size={12} />}
-                          {isPrivate ? 'Private' : 'Company-wide'}
+                          {isPrivate ? (
+                            <Lock size={12} />
+                          ) : (
+                            <UsersRound size={12} />
+                          )}
+                          {isPrivate ? "Private" : "Public"}
                         </button>
                       )}
                       <button
                         onClick={onClose}
-                        className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-all shadow-sm hover:shadow"
+                        className="w-9 h-9 rounded-[7px] bg-secondary hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all shadow-sm hover:shadow"
                       >
                         <X size={18} />
                       </button>
@@ -200,23 +260,23 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
 
                   {/* Quick Actions */}
                   <div className="flex items-center gap-2">
-                    {meeting.status === 'completed' && (
+                    {meeting.status === "completed" && (
                       <button
                         onClick={() => onViewTranscript(meeting.id)}
-                        className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg border border-emerald-200 dark:border-emerald-800/30 transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95"
+                        className="px-3 py-1.5 bg-accent/10 dark:bg-accent/20 hover:bg-accent/15 dark:hover:bg-accent/25 text-accent text-xs font-bold rounded-[7px] border border-accent/20 dark:border-accent/30 transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95"
                       >
                         <MessageSquare size={12} />
                         Transcript
                       </button>
                     )}
-                    {meeting.status === 'completed' && (
-                      <button className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95">
+                    {meeting.status === "completed" && (
+                      <button className="px-3 py-1.5 bg-background hover:bg-muted text-muted-foreground text-xs font-bold rounded-[7px] border border-border transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95">
                         <Share2 size={12} />
                         Share
                       </button>
                     )}
-                    {meeting.hasBrief && meeting.status !== 'completed' && (
-                      <button className="px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95">
+                    {meeting.hasBrief && meeting.status !== "completed" && (
+                      <button className="px-3 py-1.5 bg-background hover:bg-muted text-muted-foreground text-xs font-bold rounded-[7px] border border-border transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95">
                         <FileText size={12} />
                         Pre-meeting Brief
                       </button>
@@ -228,83 +288,41 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
               {/* Content */}
               <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar relative z-10">
                 <div className="space-y-6">
-
                   {/* Meeting Purpose - Why did this meeting exist? */}
-                  {meeting.status === 'completed' && (
+                  {meeting.status === "completed" && (
                     <section>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-500 mb-2">Purpose</h3>
-                      <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                        Purpose
+                      </h3>
+                      <p className="text-sm text-foreground leading-relaxed">
                         {meetingBrief.purpose}
                       </p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2 italic">
+                      <p className="text-xs text-muted-foreground mt-2 italic">
                         {meetingBrief.humanRecognition}
                       </p>
                     </section>
                   )}
 
-                  {/* Bridge to Briefs - "This meeting generated X active Briefs" */}
-                  {meeting.status === 'completed' && generatedBriefs.length > 0 && (
-                    <section>
-                      <button
-                        onClick={() => setShowBriefsSection(!showBriefsSection)}
-                        className="flex items-center gap-2 mb-3 group"
-                      >
-                        <Link2 size={14} className="text-purple-500" />
-                        <h3 className="text-sm font-bold text-zinc-700 dark:text-zinc-300 group-hover:text-purple-600 transition-colors">
-                          This meeting generated {generatedBriefs.length} active Briefs
-                        </h3>
-                        <ChevronDown size={14} className={`text-zinc-400 transition-transform ${showBriefsSection ? 'rotate-180' : ''}`} />
-                      </button>
-
-                      <AnimatePresence>
-                        {showBriefsSection && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="grid grid-cols-2 gap-3">
-                              {generatedBriefs.map(brief => (
-                                <button
-                                  key={brief.id}
-                                  className="p-4 rounded-xl bg-purple-50/50 dark:bg-purple-900/10 border border-purple-100/50 dark:border-purple-900/20 hover:border-purple-300 dark:hover:border-purple-800 text-left group/brief transition-all"
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <FileText size={14} className="text-purple-500" />
-                                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover/brief:text-purple-600 dark:group-hover/brief:text-purple-400">
-                                        {brief.title}
-                                      </span>
-                                    </div>
-                                    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${
-                                      brief.status === 'active'
-                                        ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600'
-                                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500'
-                                    }`}>
-                                      {brief.status}
-                                    </span>
-                                  </div>
-                                </button>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </section>
-                  )}
-
                   {/* Attendees */}
                   <section>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-500 mb-3">Attendees ({meeting.attendees.length})</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                      Attendees ({meeting.attendees.length})
+                    </h3>
                     <div className="flex flex-wrap gap-2">
                       {meeting.attendees.map((person, idx) => (
                         <button
                           key={idx}
                           onClick={() => onPersonClick(person)}
-                          className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg text-sm text-zinc-700 dark:text-zinc-300 transition-colors"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-secondary hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-sm text-foreground transition-colors group/att"
                         >
-                          {person}
+                          <div
+                            className={`w-6 h-6 rounded-full bg-gradient-to-br ${getPersonColor(person)} flex items-center justify-center text-white text-[9px] font-bold shrink-0`}
+                          >
+                            {getInitials(person)}
+                          </div>
+                          <span className="group-hover/att:text-accent transition-colors">
+                            {person}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -312,12 +330,52 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
 
                   {/* Key Decisions */}
                   <section>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-500 mb-3">Key Decisions</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                      Key Decisions
+                    </h3>
                     <ul className="space-y-2">
                       {mockKeyDecisions.map((decision, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-                          <span className="text-zinc-400 mt-1.5">•</span>
-                          <span>{decision}</span>
+                        <li
+                          key={idx}
+                          className="flex items-start gap-2 text-sm text-foreground group"
+                        >
+                          <span className="text-muted-foreground mt-1.5">
+                            •
+                          </span>
+                          <span className="flex-1">{decision.text}</span>
+                          <HoverCard openDelay={200}>
+                            <HoverCardTrigger asChild>
+                              <button
+                                onClick={() => {
+                                  onClose();
+                                  onViewTranscript(
+                                    meeting.id,
+                                    decision.transcriptTimestamp,
+                                  );
+                                }}
+                                className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground/50 hover:text-blue-500 transition-all shrink-0 mt-0.5"
+                                title="View in transcript"
+                              >
+                                <MessageSquare size={12} />
+                              </button>
+                            </HoverCardTrigger>
+                            <HoverCardContent side="left" className="w-72 p-3">
+                              <div className="border-l-2 border-blue-500 pl-3">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                                  <span className="font-medium">
+                                    {decision.speaker}
+                                  </span>
+                                  <span>at {decision.transcriptTimestamp}</span>
+                                </div>
+                                <p className="text-xs text-foreground italic">
+                                  &ldquo;{decision.transcriptExcerpt}&rdquo;
+                                </p>
+                                <p className="text-[10px] text-accent mt-2 font-medium">
+                                  Click to view in transcript &rarr;
+                                </p>
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
                         </li>
                       ))}
                     </ul>
@@ -325,47 +383,92 @@ export const MeetingDetailModal: React.FC<MeetingDetailModalProps> = ({
 
                   {/* Commitments */}
                   <section>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-500 mb-3">Commitments</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                      Commitments
+                    </h3>
                     <div className="space-y-2">
                       {mockActionItems.map((item) => (
                         <div
                           key={item.id}
                           className="flex items-start gap-3 py-2"
                         >
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 ${
-                            item.completed
-                              ? 'bg-emerald-500 border-emerald-500'
-                              : 'border-zinc-300 dark:border-zinc-600'
-                          }`}>
-                            {item.completed && <CheckCircle2 size={10} className="text-white" strokeWidth={3} />}
+                          <div
+                            className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 mt-0.5 ${
+                              item.completed
+                                ? "bg-accent border-accent"
+                                : "border-border"
+                            }`}
+                          >
+                            {item.completed && (
+                              <CheckCircle2
+                                size={10}
+                                className="text-white"
+                                strokeWidth={3}
+                              />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm ${
-                              item.completed
-                                ? 'text-zinc-400 dark:text-zinc-500 line-through'
-                                : 'text-zinc-700 dark:text-zinc-300'
-                            }`}>
+                            <p
+                              className={`text-sm ${
+                                item.completed
+                                  ? "text-muted-foreground line-through"
+                                  : "text-foreground"
+                              }`}
+                            >
                               {item.text}
                             </p>
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 mt-1">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
                               <button
                                 onClick={() => onPersonClick(item.assignee)}
-                                className="hover:text-zinc-700 dark:hover:text-zinc-300 hover:underline transition-colors"
+                                className="hover:text-foreground hover:underline transition-colors"
                               >
                                 {item.assignee}
                               </button>
                               <span>•</span>
                               <span>Due {item.dueDate}</span>
+                              {item.transcriptTimestamp && (
+                                <HoverCard openDelay={200}>
+                                  <HoverCardTrigger asChild>
+                                    <button
+                                      onClick={() => {
+                                        onClose();
+                                        onViewTranscript(
+                                          meeting.id,
+                                          item.transcriptTimestamp,
+                                        );
+                                      }}
+                                      className="ml-auto p-1 text-muted-foreground/40 hover:text-emerald-500 transition-all"
+                                      title="View in transcript"
+                                    >
+                                      <MessageSquare size={11} />
+                                    </button>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent
+                                    side="left"
+                                    className="w-64 p-3"
+                                  >
+                                    <div className="border-l-2 border-emerald-500 pl-3">
+                                      <div className="text-xs text-muted-foreground mb-1">
+                                        <span className="font-medium">
+                                          Transcript
+                                        </span>{" "}
+                                        at {item.transcriptTimestamp}
+                                      </div>
+                                      <p className="text-[10px] text-accent mt-1 font-medium">
+                                        Click to view in transcript &rarr;
+                                      </p>
+                                    </div>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              )}
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   </section>
-
                 </div>
               </div>
-
             </div>
           </motion.div>
         </>

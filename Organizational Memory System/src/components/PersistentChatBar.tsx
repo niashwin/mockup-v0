@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ArrowUp, Search, X, Sparkles, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowUp, Search, X, Sparkles, Loader2 } from "lucide-react";
 
 /**
  * Persistent Chat Bar
@@ -12,7 +12,7 @@ import { ArrowUp, Search, X, Sparkles, Loader2 } from 'lucide-react';
 
 interface Message {
   id: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 }
 
@@ -21,7 +21,7 @@ interface PersistentChatBarProps {
 }
 
 export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +30,7 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   // Focus input when expanded
@@ -45,12 +45,12 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
 
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
-      role: 'user',
-      content: inputValue.trim()
+      role: "user",
+      content: inputValue.trim(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
     setIsExpanded(true);
     setIsLoading(true);
 
@@ -60,26 +60,26 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
         "Based on your organizational memory, I found several relevant items. The Q3 launch KPIs discussion has been ongoing in the #strategy channel, with Marketing and Product still misaligned on targets.",
         "Looking at recent meetings and documents, the budget approval for the $50K ad spend is still pending CFO review. Finance flagged this in yesterday's update.",
         "I've searched your memory and found that the Lumen account escalation is the most urgent item - their CTO reached out directly about the missing audit exports.",
-        "From the team discussions, it appears the mobile navigation redesign is ready for your review. Sarah completed the Figma updates yesterday."
+        "From the team discussions, it appears the mobile navigation redesign is ready for your review. Sarah completed the Figma updates yesterday.",
       ];
 
       const assistantMessage: Message = {
         id: `msg-${Date.now()}`,
-        role: 'assistant',
-        content: responses[Math.floor(Math.random() * responses.length)]
+        role: "assistant",
+        content: responses[Math.floor(Math.random() * responses.length)],
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
       setIsLoading(false);
     }, 1500);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       if (messages.length === 0) {
         setIsExpanded(false);
       }
@@ -89,7 +89,7 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
   const handleClose = () => {
     setIsExpanded(false);
     setMessages([]);
-    setInputValue('');
+    setInputValue("");
   };
 
   return (
@@ -97,8 +97,10 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
       layout
       className="fixed bottom-6 left-1/2 -translate-x-1/2"
       style={{
-        width: isExpanded ? 'min(600px, calc(100vw - 48px))' : 'min(480px, calc(100vw - 80px))',
-        zIndex: 99999
+        width: isExpanded
+          ? "min(600px, calc(100vw - 48px))"
+          : "min(480px, calc(100vw - 80px))",
+        zIndex: 99999,
       }}
     >
       <motion.div
@@ -108,7 +110,7 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
           border border-zinc-200 dark:border-zinc-700
           shadow-xl shadow-zinc-900/10 dark:shadow-black/40
           overflow-hidden
-          ${isExpanded ? 'rounded-2xl' : 'rounded-full'}
+          ${isExpanded ? "rounded-2xl" : "rounded-full"}
         `}
       >
         {/* Expanded: Message History */}
@@ -116,7 +118,7 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
           {isExpanded && messages.length > 0 && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
+              animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="border-b border-zinc-100 dark:border-zinc-800"
             >
@@ -124,7 +126,9 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
               <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/50">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-blue-500" />
-                  <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">Sentra AI</span>
+                  <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                    Sentra AI
+                  </span>
                 </div>
                 <button
                   onClick={handleClose}
@@ -139,14 +143,15 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
                       className={`
                         max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed
-                        ${message.role === 'user'
-                          ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300'
+                        ${
+                          message.role === "user"
+                            ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                         }
                       `}
                     >
@@ -190,9 +195,10 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
             disabled={!inputValue.trim() || isLoading}
             className={`
               flex items-center justify-center w-7 h-7 rounded-full transition-colors shrink-0
-              ${inputValue.trim() && !isLoading
-                ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400'
+              ${
+                inputValue.trim() && !isLoading
+                  ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-400"
               }
             `}
             aria-label="Submit"

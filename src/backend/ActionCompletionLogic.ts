@@ -27,7 +27,7 @@
 
 export interface ActionCompletionEvent {
   itemId: string;
-  itemType: 'alert' | 'commitment' | 'meeting' | 'relationship';
+  itemType: "alert" | "commitment" | "meeting" | "relationship";
   actionId: string;
   userId: string;
   timestamp: string;
@@ -296,5 +296,5 @@ export interface ActionCompletionEvent {
 
 export default {
   // Placeholder export for documentation purposes
-  _documentation: 'See comments above for backend specification'
+  _documentation: "See comments above for backend specification",
 };

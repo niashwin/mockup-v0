@@ -1,10 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Sparkles, Search, FileText, MessageSquare, Users, Clock } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  X,
+  Send,
+  Sparkles,
+  Search,
+  FileText,
+  MessageSquare,
+  Users,
+  Clock,
+} from "lucide-react";
 
 interface Message {
   id: string;
-  type: 'user' | 'assistant';
+  type: "user" | "assistant";
   content: string;
   timestamp: Date;
   sources?: Array<{ title: string; type: string }>;
@@ -16,17 +25,35 @@ interface ChatInterfaceProps {
 }
 
 const starterPrompts = [
-  { icon: Sparkles, text: "What did we decide about Q3 priorities?", category: "Decisions" },
-  { icon: Users, text: "Who is working on the mobile app?", category: "People" },
+  {
+    icon: Sparkles,
+    text: "What did we decide about Q3 priorities?",
+    category: "Decisions",
+  },
+  {
+    icon: Users,
+    text: "Who is working on the mobile app?",
+    category: "People",
+  },
   { icon: Clock, text: "Summarize last week's meetings", category: "Meetings" },
-  { icon: FileText, text: "Show me recent design system updates", category: "Documents" },
+  {
+    icon: FileText,
+    text: "Show me recent design system updates",
+    category: "Documents",
+  },
 ];
 
 // Mock AI response generator
-const generateMockResponse = (query: string): { content: string; sources: Array<{ title: string; type: string }> } => {
+const generateMockResponse = (
+  query: string,
+): { content: string; sources: Array<{ title: string; type: string }> } => {
   const lowerQuery = query.toLowerCase();
-  
-  if (lowerQuery.includes('q3') || lowerQuery.includes('priorities') || lowerQuery.includes('decide')) {
+
+  if (
+    lowerQuery.includes("q3") ||
+    lowerQuery.includes("priorities") ||
+    lowerQuery.includes("decide")
+  ) {
     return {
       content: `Based on recent discussions and documentation, here are the key Q3 priorities:
 
@@ -43,14 +70,14 @@ const generateMockResponse = (query: string): { content: string; sources: Array<
 
 The leadership team aligned on these priorities during the Q3 kickoff meeting, with Sarah Chen leading product initiatives and Mike Johnson overseeing engineering execution.`,
       sources: [
-        { title: 'Q3 OKRs Dashboard', type: 'document' },
-        { title: 'Leadership Kickoff Meeting', type: 'meeting' },
-        { title: '#strategy channel', type: 'slack' }
-      ]
+        { title: "Q3 OKRs Dashboard", type: "document" },
+        { title: "Leadership Kickoff Meeting", type: "meeting" },
+        { title: "#strategy channel", type: "slack" },
+      ],
     };
   }
-  
-  if (lowerQuery.includes('mobile') || lowerQuery.includes('app')) {
+
+  if (lowerQuery.includes("mobile") || lowerQuery.includes("app")) {
     return {
       content: `The mobile app team currently consists of:
 
@@ -64,14 +91,14 @@ The leadership team aligned on these priorities during the Q3 kickoff meeting, w
 
 The team meets every Tuesday for sprint planning and is currently focusing on offline mode and quick capture workflows. Beta launch is targeted for end of Q3.`,
       sources: [
-        { title: 'Mobile Roadmap Q3-Q4', type: 'document' },
-        { title: 'Team Roster', type: 'document' },
-        { title: 'Tuesday Sprint Planning', type: 'meeting' }
-      ]
+        { title: "Mobile Roadmap Q3-Q4", type: "document" },
+        { title: "Team Roster", type: "document" },
+        { title: "Tuesday Sprint Planning", type: "meeting" },
+      ],
     };
   }
-  
-  if (lowerQuery.includes('meeting') || lowerQuery.includes('last week')) {
+
+  if (lowerQuery.includes("meeting") || lowerQuery.includes("last week")) {
     return {
       content: `Here's a summary of key meetings from last week:
 
@@ -95,14 +122,14 @@ The team meets every Tuesday for sprint planning and is currently focusing on of
   - Approved new iconography for memory stream
   - Planning user study for next month`,
       sources: [
-        { title: 'Product Sync Notes', type: 'meeting' },
-        { title: 'Engineering Standup', type: 'meeting' },
-        { title: 'All-Hands Recording', type: 'video' }
-      ]
+        { title: "Product Sync Notes", type: "meeting" },
+        { title: "Engineering Standup", type: "meeting" },
+        { title: "All-Hands Recording", type: "video" },
+      ],
     };
   }
-  
-  if (lowerQuery.includes('design') || lowerQuery.includes('system')) {
+
+  if (lowerQuery.includes("design") || lowerQuery.includes("system")) {
     return {
       content: `Recent design system updates include:
 
@@ -118,13 +145,13 @@ The team meets every Tuesday for sprint planning and is currently focusing on of
 
 The design system is now used across web and mobile with 95% component consistency.`,
       sources: [
-        { title: 'Design System Changelog', type: 'document' },
-        { title: 'Figma: DS Components', type: 'design' },
-        { title: '#design channel', type: 'slack' }
-      ]
+        { title: "Design System Changelog", type: "document" },
+        { title: "Figma: DS Components", type: "design" },
+        { title: "#design channel", type: "slack" },
+      ],
     };
   }
-  
+
   // Default response
   return {
     content: `I found some relevant information about "${query}":
@@ -139,21 +166,24 @@ The design system is now used across web and mobile with 95% component consisten
 
 Would you like me to help you find something more specific?`,
     sources: [
-      { title: 'Recent Activity', type: 'system' },
-      { title: 'Team Updates', type: 'slack' }
-    ]
+      { title: "Recent Activity", type: "system" },
+      { title: "Team Updates", type: "slack" },
+    ],
   };
 };
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose }) => {
+export const ChatInterface: React.FC<ChatInterfaceProps> = ({
+  isOpen,
+  onClose,
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -173,13 +203,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose })
     // Add user message
     const userMessage: Message = {
       id: `user-${Date.now()}`,
-      type: 'user',
+      type: "user",
       content: inputValue,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
     setIsTyping(true);
 
     // Simulate AI thinking delay
@@ -187,13 +217,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose })
       const response = generateMockResponse(inputValue);
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
-        type: 'assistant',
+        type: "assistant",
         content: response.content,
         timestamp: new Date(),
-        sources: response.sources
+        sources: response.sources,
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, assistantMessage]);
       setIsTyping(false);
     }, 1200);
   };
@@ -205,10 +235,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose })
 
   const getSourceIcon = (type: string) => {
     switch (type) {
-      case 'meeting': return Clock;
-      case 'document': return FileText;
-      case 'slack': return MessageSquare;
-      default: return FileText;
+      case "meeting":
+        return Clock;
+      case "document":
+        return FileText;
+      case "slack":
+        return MessageSquare;
+      default:
+        return FileText;
     }
   };
 
@@ -230,29 +264,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose })
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', damping: 30, stiffness: 400 }}
+            transition={{ type: "spring", damping: 30, stiffness: 400 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
-            <div className="w-full max-w-3xl h-[80vh] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-2xl shadow-black/20 rounded-[2rem] overflow-hidden flex flex-col pointer-events-auto">
-              
+            <div className="w-full max-w-3xl h-[80vh] bg-card/95 dark:bg-neutral-900/95 backdrop-blur-3xl border border-white/60 dark:border-white/10 shadow-2xl shadow-black/20 rounded-[2rem] overflow-hidden flex flex-col pointer-events-auto">
               {/* Header */}
-              <div className="shrink-0 px-8 py-6 border-b border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-b from-white/50 to-transparent dark:from-zinc-900/50 relative">
+              <div className="shrink-0 px-8 py-6 border-b border-border bg-gradient-to-b from-white/50 to-transparent dark:from-neutral-900/50 relative">
                 {/* Decorative gradient */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-fuchsia-500/10 rounded-full blur-3xl pointer-events-none" />
-                
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-gradient-to-r from-accent/10 via-accent/5 to-accent/[0.02] rounded-full blur-3xl pointer-events-none" />
+
                 <div className="relative flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center">
-                      <Sparkles size={20} className="text-blue-600 dark:text-blue-400" strokeWidth={2} />
+                    <div className="w-10 h-10 rounded-[7px] bg-gradient-to-br from-accent/20 to-accent/10 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center">
+                      <Sparkles
+                        size={20}
+                        className="text-accent"
+                        strokeWidth={2}
+                      />
                     </div>
                     <div>
-                      <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">Ask Sentra</h2>
-                      <p className="text-xs text-zinc-500">Your AI organizational memory assistant</p>
+                      <h2 className="text-xl font-semibold text-foreground">
+                        Ask Sentra
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Your AI organizational memory assistant
+                      </p>
                     </div>
                   </div>
                   <button
                     onClick={onClose}
-                    className="w-9 h-9 rounded-xl bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 flex items-center justify-center text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-all shadow-sm hover:shadow"
+                    className="w-9 h-9 rounded-[7px] bg-muted dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-800 flex items-center justify-center text-muted-foreground hover:text-foreground transition-all shadow-sm hover:shadow"
                   >
                     <X size={18} />
                   </button>
@@ -266,11 +307,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose })
                   <div className="h-full flex flex-col items-center justify-center space-y-8">
                     <div className="text-center max-w-md">
                       <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center mx-auto mb-4">
-                        <Search size={28} className="text-blue-600 dark:text-blue-400" strokeWidth={1.5} />
+                        <Search
+                          size={28}
+                          className="text-accent"
+                          strokeWidth={1.5}
+                        />
                       </div>
-                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">What can I help you with?</h3>
-                      <p className="text-sm text-zinc-500 leading-relaxed">
-                        Ask me anything about your organization's memory. I can help you find decisions, people, meetings, and documents.
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        What can I help you with?
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Ask me anything about your organization's memory. I can
+                        help you find decisions, people, meetings, and
+                        documents.
                       </p>
                     </div>
 
@@ -284,16 +333,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose })
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.1 }}
-                            onClick={() => handleStarterPromptClick(prompt.text)}
-                            className="group p-4 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-200 dark:hover:border-zinc-700 rounded-2xl transition-all text-left hover:shadow-lg"
+                            onClick={() =>
+                              handleStarterPromptClick(prompt.text)
+                            }
+                            className="group p-4 bg-background dark:bg-neutral-800/50 hover:bg-card dark:hover:bg-neutral-800 border border-border hover:border-border rounded-2xl transition-all text-left hover:shadow-lg"
                           >
                             <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-700 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-600 flex items-center justify-center transition-colors shrink-0">
-                                <Icon size={14} className="text-zinc-600 dark:text-zinc-400" />
+                              <div className="w-8 h-8 rounded-[7px] bg-muted dark:bg-neutral-800 group-hover:bg-neutral-200 dark:group-hover:bg-neutral-800 flex items-center justify-center transition-colors shrink-0">
+                                <Icon
+                                  size={14}
+                                  className="text-muted-foreground"
+                                />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1">{prompt.category}</p>
-                                <p className="text-sm text-zinc-900 dark:text-zinc-100 leading-snug">{prompt.text}</p>
+                                <p className="text-xs font-medium text-muted-foreground mb-1">
+                                  {prompt.category}
+                                </p>
+                                <p className="text-sm text-foreground leading-snug">
+                                  {prompt.text}
+                                </p>
                               </div>
                             </div>
                           </motion.button>
@@ -310,54 +368,72 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose })
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
-                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
                       >
-                        {message.type === 'user' ? (
+                        {message.type === "user" ? (
                           /* User Message */
-                          <div className="max-w-[75%] bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-2xl px-5 py-3 shadow-lg">
-                            <p className="text-sm leading-relaxed">{message.content}</p>
+                          <div className="max-w-[75%] bg-primary dark:bg-muted text-white dark:text-foreground rounded-2xl px-5 py-3 shadow-lg">
+                            <p className="text-sm leading-relaxed">
+                              {message.content}
+                            </p>
                           </div>
                         ) : (
                           /* Assistant Message */
                           <div className="max-w-[85%] space-y-3">
                             <div className="flex items-start gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center shrink-0">
-                                <Sparkles size={14} className="text-blue-600 dark:text-blue-400" />
+                              <div className="w-8 h-8 rounded-[7px] bg-gradient-to-br from-accent/20 to-accent/10 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center shrink-0">
+                                <Sparkles size={14} className="text-accent" />
                               </div>
-                              <div className="flex-1 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 py-4 shadow-sm">
+                              <div className="flex-1 bg-background dark:bg-neutral-800/50 border border-border rounded-2xl px-5 py-4 shadow-sm">
                                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                                  {message.content.split('\n').map((line, i) => {
-                                    if (line.trim().startsWith('•')) {
-                                      return (
-                                        <div key={i} className="flex gap-2 mb-2">
-                                          <span className="text-blue-500 dark:text-blue-400 shrink-0">•</span>
-                                          <span className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{line.substring(1).trim()}</span>
-                                        </div>
+                                  {message.content
+                                    .split("\n")
+                                    .map((line, i) => {
+                                      if (line.trim().startsWith("•")) {
+                                        return (
+                                          <div
+                                            key={i}
+                                            className="flex gap-2 mb-2"
+                                          >
+                                            <span className="text-accent shrink-0">
+                                              •
+                                            </span>
+                                            <span className="text-sm text-foreground leading-relaxed">
+                                              {line.substring(1).trim()}
+                                            </span>
+                                          </div>
+                                        );
+                                      }
+                                      return line.trim() ? (
+                                        <p
+                                          key={i}
+                                          className="text-sm text-foreground leading-relaxed mb-3 last:mb-0"
+                                        >
+                                          {line}
+                                        </p>
+                                      ) : (
+                                        <div key={i} className="h-2" />
                                       );
-                                    }
-                                    return line.trim() ? (
-                                      <p key={i} className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed mb-3 last:mb-0">
-                                        {line}
-                                      </p>
-                                    ) : (
-                                      <div key={i} className="h-2" />
-                                    );
-                                  })}
+                                    })}
                                 </div>
                               </div>
                             </div>
-                            
+
                             {/* Sources */}
                             {message.sources && message.sources.length > 0 && (
                               <div className="ml-11 space-y-2">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Sources</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                  Sources
+                                </p>
                                 <div className="flex flex-wrap gap-2">
                                   {message.sources.map((source, idx) => {
-                                    const SourceIcon = getSourceIcon(source.type);
+                                    const SourceIcon = getSourceIcon(
+                                      source.type,
+                                    );
                                     return (
                                       <div
                                         key={idx}
-                                        className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors cursor-pointer"
+                                        className="flex items-center gap-2 px-3 py-1.5 bg-card dark:bg-neutral-800 border border-border rounded-[7px] text-xs text-muted-foreground hover:border-border transition-colors cursor-pointer"
                                       >
                                         <SourceIcon size={12} />
                                         <span>{source.title}</span>
@@ -379,42 +455,57 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ isOpen, onClose })
                         animate={{ opacity: 1, y: 0 }}
                         className="flex items-center gap-3"
                       >
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center">
-                          <Sparkles size={14} className="text-blue-600 dark:text-blue-400 animate-pulse" />
+                        <div className="w-8 h-8 rounded-[7px] bg-gradient-to-br from-accent/20 to-accent/10 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg flex items-center justify-center">
+                          <Sparkles
+                            size={14}
+                            className="text-accent animate-pulse"
+                          />
                         </div>
-                        <div className="flex gap-1.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-100 dark:border-zinc-800 rounded-2xl px-5 py-4">
-                          <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <div className="w-2 h-2 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div className="flex gap-1.5 bg-background dark:bg-neutral-800/50 border border-border rounded-2xl px-5 py-4">
+                          <div
+                            className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                            style={{ animationDelay: "0ms" }}
+                          />
+                          <div
+                            className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                            style={{ animationDelay: "150ms" }}
+                          />
+                          <div
+                            className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"
+                            style={{ animationDelay: "300ms" }}
+                          />
                         </div>
                       </motion.div>
                     )}
-                    
+
                     <div ref={messagesEndRef} />
                   </>
                 )}
               </div>
 
               {/* Input Area */}
-              <div className="shrink-0 px-8 py-6 border-t border-zinc-100 dark:border-zinc-800/50 bg-gradient-to-t from-white/50 to-transparent dark:from-zinc-900/50">
-                <form onSubmit={handleSubmit} className="flex items-center gap-3">
+              <div className="shrink-0 px-8 py-6 border-t border-border bg-gradient-to-t from-white/50 to-transparent dark:from-neutral-900/50">
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex items-center gap-3"
+                >
                   <input
                     ref={inputRef}
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     placeholder="Ask anything about your organization..."
-                    className="flex-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-5 py-4 text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all shadow-sm"
+                    className="flex-1 bg-card dark:bg-neutral-800 border border-border rounded-2xl px-5 py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/50 transition-all shadow-sm"
                   />
                   <button
                     type="submit"
                     disabled={!inputValue.trim()}
-                    className="w-12 h-12 rounded-xl bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-zinc-200 disabled:bg-zinc-200 dark:disabled:bg-zinc-700 text-white dark:text-zinc-900 disabled:text-zinc-400 flex items-center justify-center transition-all shadow-lg hover:shadow-xl disabled:shadow-none hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+                    className="w-12 h-12 rounded-[7px] bg-primary dark:bg-muted hover:bg-foreground dark:hover:bg-neutral-200 disabled:bg-neutral-200 dark:disabled:bg-neutral-800 text-white dark:text-foreground disabled:text-muted-foreground flex items-center justify-center transition-all shadow-lg hover:shadow-xl disabled:shadow-none hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
                   >
                     <Send size={16} />
                   </button>
                 </form>
-                <p className="text-[10px] text-zinc-400 text-center mt-3">
+                <p className="text-[10px] text-muted-foreground text-center mt-3">
                   Sentra AI can make mistakes. Verify important information.
                 </p>
               </div>

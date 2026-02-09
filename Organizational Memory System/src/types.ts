@@ -1,16 +1,23 @@
-export type AlertSeverity = 'critical' | 'warning' | 'info';
+export type AlertSeverity = "critical" | "warning" | "info";
 
 // New types for attention scoring and prioritization
-export type Probability = 'high' | 'medium' | 'low';
-export type Impact = 'high' | 'medium' | 'low';
-export type ActionCategory = 'context' | 'execute' | 'collaborate';
-export type AttentionType = 'risk' | 'misalignment' | 'blocker' | 'commitment' | 'meeting' | 'relationship' | 'followup';
+export type Probability = "high" | "medium" | "low";
+export type Impact = "high" | "medium" | "low";
+export type ActionCategory = "context" | "execute" | "collaborate";
+export type AttentionType =
+  | "risk"
+  | "misalignment"
+  | "blocker"
+  | "commitment"
+  | "meeting"
+  | "relationship"
+  | "followup";
 
 // Focus categories for the orientation layer
 // - pulse: what's emerging or shifting
 // - friction: where progress is stuck or contested
 // - horizon: what's coming due or approaching decision
-export type FocusCategory = 'pulse' | 'friction' | 'horizon';
+export type FocusCategory = "pulse" | "friction" | "horizon";
 
 // Evidence items for verification
 export interface EvidenceItem {
@@ -24,15 +31,15 @@ export interface EvidenceItem {
 export interface AttentionMetadata {
   probability: Probability;
   impact: Impact;
-  memoryRationale: string;  // Why this surfaced - explains context, not commands
+  memoryRationale: string; // Why this surfaced - explains context, not commands
   impactNarrative?: string; // Human-readable impact description (blocks downstream work, etc.)
-  isNew?: boolean;          // Item appeared since last visit
-  isEscalated?: boolean;    // Item urgency increased since last visit
+  isNew?: boolean; // Item appeared since last visit
+  isEscalated?: boolean; // Item urgency increased since last visit
   needsIntervention: boolean;
   needsDecision: boolean;
   collaborators?: string[];
   evidence?: EvidenceItem[];
-  focusCategory?: FocusCategory;  // pulse, friction, or horizon
+  focusCategory?: FocusCategory; // pulse, friction, or horizon
 }
 
 export interface Alert extends Partial<AttentionMetadata> {
@@ -47,7 +54,14 @@ export interface Alert extends Partial<AttentionMetadata> {
 }
 
 export interface CommitmentSource {
-  type: 'meeting' | 'email' | 'slack' | 'document' | 'calendar' | 'linear' | 'notion';
+  type:
+    | "meeting"
+    | "email"
+    | "slack"
+    | "document"
+    | "calendar"
+    | "linear"
+    | "notion";
   title: string;
   id?: string;
   timestamp?: string;
@@ -62,8 +76,8 @@ export interface Commitment extends Partial<AttentionMetadata> {
   title: string;
   assignee: string; // 'Me' or others
   dueDate: string;
-  status: 'pending' | 'completed' | 'overdue';
-  priority: 'High' | 'Medium' | 'Low';
+  status: "pending" | "completed" | "overdue";
+  priority: "High" | "Medium" | "Low";
   okr?: string;
   context: string;
   source?: CommitmentSource;
@@ -79,9 +93,9 @@ export interface MeetingBrief extends Partial<AttentionMetadata> {
   attendees: string[];
   summary: string;
   keyTopics: string[];
-  status: 'scheduled' | 'completed' | 'cancelled';
-  reportStatus?: 'published' | 'pending' | 'none';
-  location: 'Zoom' | 'Google Meet' | 'Microsoft Teams' | 'In Person' | 'Phone';
+  status: "scheduled" | "completed" | "cancelled";
+  reportStatus?: "published" | "pending" | "none";
+  location: "Zoom" | "Google Meet" | "Microsoft Teams" | "In Person" | "Phone";
   meetingLink?: string;
   locationDetails?: string; // e.g., "Conference Room B" or the URL
   isPrivate?: boolean;
@@ -99,28 +113,28 @@ export interface Report {
   title: string;
   dateRange: string;
   summary: string;
-  status: 'ready' | 'generating';
+  status: "ready" | "generating";
 }
 
 export interface SwimlaneEvent {
   id: string;
   title: string;
   timestamp: string;
-  type: 'meeting' | 'decision' | 'document' | 'alert';
+  type: "meeting" | "decision" | "document" | "alert";
   lane: string;
 }
 
 // Attention item types for the unified attention stream
 export interface AttentionAlert extends Alert {
-  itemType: 'alert';
+  itemType: "alert";
 }
 
 export interface AttentionCommitment extends Commitment {
-  itemType: 'commitment';
+  itemType: "commitment";
 }
 
 export interface AttentionMeeting extends MeetingBrief {
-  itemType: 'meeting';
+  itemType: "meeting";
 }
 
 // Relationship/Contact attention item - for relationship maintenance
@@ -135,7 +149,7 @@ export interface RelationshipAlert extends Partial<AttentionMetadata> {
   description: string;
   lastContactDate: string;
   daysSinceContact: number;
-  relationshipStrength: 'strong' | 'warm' | 'cooling' | 'cold';
+  relationshipStrength: "strong" | "warm" | "cooling" | "cold";
   suggestedAction?: string;
   recentContext?: string; // Last thing discussed
   attentionType?: AttentionType;
@@ -143,11 +157,15 @@ export interface RelationshipAlert extends Partial<AttentionMetadata> {
 }
 
 export interface AttentionRelationship extends RelationshipAlert {
-  itemType: 'relationship';
+  itemType: "relationship";
 }
 
 // Union type for attention stream
-export type AttentionItem = AttentionAlert | AttentionCommitment | AttentionMeeting | AttentionRelationship;
+export type AttentionItem =
+  | AttentionAlert
+  | AttentionCommitment
+  | AttentionMeeting
+  | AttentionRelationship;
 
 // Collaboration types for in-card thread UI
 export interface CollaborationComment {
@@ -170,18 +188,29 @@ export interface CollaborationThread {
 // ============================================================================
 
 export type RelationshipType =
-  | 'key_stakeholder'
-  | 'champion'
-  | 'decision_maker'
-  | 'influencer'
-  | 'blocker'
-  | 'contact';
+  | "key_stakeholder"
+  | "champion"
+  | "decision_maker"
+  | "influencer"
+  | "blocker"
+  | "contact";
 
-export type RelationshipWarmth = 'hot' | 'warm' | 'cool' | 'cold' | 'new';
+export type RelationshipWarmth = "hot" | "warm" | "cool" | "cold" | "new";
 
-export type ContactCategory = 'investor' | 'client' | 'partner' | 'team' | 'other';
+export type ContactCategory =
+  | "investor"
+  | "client"
+  | "partner"
+  | "team"
+  | "other";
 
-export type InteractionType = 'email' | 'meeting' | 'call' | 'slack' | 'linkedin' | 'note';
+export type InteractionType =
+  | "email"
+  | "meeting"
+  | "call"
+  | "slack"
+  | "linkedin"
+  | "note";
 
 export interface ContactInteraction {
   id: string;
@@ -189,7 +218,7 @@ export interface ContactInteraction {
   date: string;
   subject: string;
   summary: string;
-  sentiment?: 'positive' | 'neutral' | 'negative';
+  sentiment?: "positive" | "neutral" | "negative";
 }
 
 export interface Contact {
@@ -231,9 +260,15 @@ export interface Contact {
   attentionReason?: string;
 }
 
-export type CompanyStatus = 'active' | 'prospect' | 'churned' | 'paused';
-export type CompanyTier = 'enterprise' | 'growth' | 'startup';
-export type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'closed_won' | 'closed_lost';
+export type CompanyStatus = "active" | "prospect" | "churned" | "paused";
+export type CompanyTier = "enterprise" | "growth" | "startup";
+export type DealStage =
+  | "lead"
+  | "qualified"
+  | "proposal"
+  | "negotiation"
+  | "closed_won"
+  | "closed_lost";
 
 export interface CompanyDeal {
   id: string;
@@ -246,7 +281,7 @@ export interface CompanyDeal {
 
 export interface CompanyActivity {
   id: string;
-  type: 'meeting' | 'email' | 'call' | 'note' | 'deal_update';
+  type: "meeting" | "email" | "call" | "note" | "deal_update";
   title: string;
   summary: string;
   date: string;

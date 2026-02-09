@@ -1,18 +1,20 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Video, Clock, Users } from 'lucide-react';
-import { useMeetingCapture } from './MeetingCaptureProvider';
+import React from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { Video, Clock, Users } from "lucide-react";
+import { useMeetingCapture } from "./MeetingCaptureProvider";
 
 interface MeetingIndicatorProps {
   className?: string;
 }
 
-export const MeetingIndicator: React.FC<MeetingIndicatorProps> = ({ className = '' }) => {
+export const MeetingIndicator: React.FC<MeetingIndicatorProps> = ({
+  className = "",
+}) => {
   const { upcomingMeeting, captureState, startCapture } = useMeetingCapture();
 
   if (!upcomingMeeting) return null;
 
-  const isCapturing = captureState === 'capturing';
+  const isCapturing = captureState === "capturing";
   const isActive = upcomingMeeting.isActive;
 
   return (
@@ -28,11 +30,12 @@ export const MeetingIndicator: React.FC<MeetingIndicatorProps> = ({ className = 
           className={`
             flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
             transition-colors duration-300
-            ${isCapturing
-              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300'
-              : isActive
-                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'
+            ${
+              isCapturing
+                ? "bg-accent/10 text-accent"
+                : isActive
+                  ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+                  : "bg-secondary text-muted-foreground"
             }
           `}
         >
@@ -41,25 +44,25 @@ export const MeetingIndicator: React.FC<MeetingIndicatorProps> = ({ className = 
             <div
               className={`w-1.5 h-1.5 rounded-full ${
                 isCapturing
-                  ? 'bg-emerald-500'
+                  ? "bg-accent"
                   : isActive
-                    ? 'bg-amber-500'
-                    : 'bg-zinc-400'
+                    ? "bg-yellow-500"
+                    : "bg-neutral-400"
               }`}
             />
             {(isCapturing || isActive) && (
               <motion.div
                 className={`absolute inset-0 rounded-full ${
-                  isCapturing ? 'bg-emerald-500' : 'bg-amber-500'
+                  isCapturing ? "bg-accent" : "bg-yellow-500"
                 }`}
                 animate={{
                   scale: [1, 2, 1],
-                  opacity: [0.5, 0, 0.5]
+                  opacity: [0.5, 0, 0.5],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
-                  ease: 'easeInOut'
+                  ease: "easeInOut",
                 }}
               />
             )}
@@ -67,12 +70,16 @@ export const MeetingIndicator: React.FC<MeetingIndicatorProps> = ({ className = 
 
           {/* Status Text */}
           <span>
-            {isCapturing ? 'Capturing' : isActive ? 'In meeting' : 'Meeting starting'}
+            {isCapturing
+              ? "Capturing"
+              : isActive
+                ? "In meeting"
+                : "Meeting starting"}
           </span>
         </div>
 
         {/* Meeting Info (on hover/click expandable) */}
-        <div className="hidden md:flex items-center gap-2 text-xs text-zinc-500">
+        <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
           <span className="max-w-[150px] truncate">
             {upcomingMeeting.title}
           </span>
@@ -90,7 +97,7 @@ export const MeetingIndicator: React.FC<MeetingIndicatorProps> = ({ className = 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={() => startCapture()}
-            className="p-1.5 rounded-full text-zinc-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+            className="p-1.5 rounded-full text-muted-foreground hover:text-accent hover:bg-accent/10 transition-colors"
             title="Start capturing"
           >
             <Video className="w-3.5 h-3.5" />

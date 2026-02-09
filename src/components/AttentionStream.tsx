@@ -1,9 +1,12 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2 } from 'lucide-react';
-import { AttentionItem } from '../types';
-import { sortByAttentionScore, filterForAttentionPane } from '../utils/AttentionScore';
-import { AttentionCard } from './AttentionCard';
+import React from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { CheckCircle2 } from "lucide-react";
+import { AttentionItem } from "../types";
+import {
+  sortByAttentionScore,
+  filterForAttentionPane,
+} from "../utils/AttentionScore";
+import { AttentionCard } from "./AttentionCard";
 
 interface AttentionStreamProps {
   items: AttentionItem[];
@@ -18,7 +21,7 @@ export const AttentionStream: React.FC<AttentionStreamProps> = ({
   onAction,
   onExpand,
   onShowEvidence,
-  showAll = false
+  showAll = false,
 }) => {
   // Filter and sort items
   const attentionItems = showAll ? items : filterForAttentionPane(items);
@@ -35,13 +38,13 @@ export const AttentionStream: React.FC<AttentionStreamProps> = ({
         animate={{ opacity: 1 }}
         className="flex-1 flex flex-col items-center justify-center py-20"
       >
-        <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center mb-4">
-          <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+        <div className="w-16 h-16 rounded-full bg-accent/10 dark:bg-accent/20 flex items-center justify-center mb-4">
+          <CheckCircle2 className="w-8 h-8 text-accent" />
         </div>
-        <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+        <h3 className="text-lg font-semibold text-foreground mb-2">
           Clear skies
         </h3>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-sm">
+        <p className="text-sm text-muted-foreground text-center max-w-sm">
           Nothing pressing right now. We'll surface things as they emerge.
         </p>
       </motion.div>
@@ -55,10 +58,10 @@ export const AttentionStream: React.FC<AttentionStreamProps> = ({
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">
           Focus
         </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           You should look at this
         </p>
       </motion.div>
