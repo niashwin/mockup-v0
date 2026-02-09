@@ -40,6 +40,9 @@ interface ArchiveState {
   /** Search query */
   searchQuery: string;
 
+  /** CRM contact filter — when set, only meetings linked to this contact are shown */
+  contactFilter: { contactId: string; contactName: string } | null;
+
   // ─── Actions ───────────────────────────────────────────────────────────────
   // Tab actions
   setActiveTab: (tab: ArchiveTab) => void;
@@ -56,6 +59,9 @@ interface ArchiveState {
 
   // Filter actions
   setSearchQuery: (query: string) => void;
+  setContactFilter: (
+    filter: { contactId: string; contactName: string } | null,
+  ) => void;
   clearFilters: () => void;
 
   // Utility
@@ -69,6 +75,7 @@ const initialState = {
   selectedArchivedReportId: null as string | null,
   selectedRadarId: null as string | null,
   searchQuery: "",
+  contactFilter: null as { contactId: string; contactName: string } | null,
 };
 
 export const useArchiveStore = create<ArchiveState>()(
@@ -84,6 +91,7 @@ export const useArchiveStore = create<ArchiveState>()(
           selectedMeetingId: null,
           selectedArchivedReportId: null,
           selectedRadarId: null,
+          contactFilter: null,
         }),
 
       // ─── Meeting Selection Actions ──────────────────────────────────────────
@@ -104,7 +112,9 @@ export const useArchiveStore = create<ArchiveState>()(
       // ─── Filter Actions ─────────────────────────────────────────────────────
       setSearchQuery: (query) => set({ searchQuery: query }),
 
-      clearFilters: () => set({ searchQuery: "" }),
+      setContactFilter: (filter) => set({ contactFilter: filter }),
+
+      clearFilters: () => set({ searchQuery: "", contactFilter: null }),
 
       // ─── Utility ────────────────────────────────────────────────────────────
       reset: () => set({ ...initialState }),

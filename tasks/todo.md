@@ -1,96 +1,136 @@
-# UI Fixes Implementation Plan
+# Meetings Page Rebuild — Implementation Plan
 
-## 1. Remove Blue Background from Briefs Page
+## Overview
 
-**Problem:** `DynamicBackground` wraps `NowScreen` in `App.tsx:4009-4018`, applying time-of-day colored gradients (blue daytime, amber morning, violet evening, slate night).
-**Fix:** Remove `<DynamicBackground>` wrapper entirely. Replace with a plain white container.
-**Files:**
-
-- [ ] `src/App.tsx:4009-4018` — Replace `<DynamicBackground className="h-full">` with `<div className="h-full bg-white dark:bg-neutral-950">`
-
-## 2. Remove Red/Orange Effects from Meetings
-
-**Problem:** Privacy toggle button in `MeetingComponents.tsx:122-126` uses orange styling (`bg-orange-50`, `text-orange-600`, `border-orange-100`). The left bar indicator (line 97) uses `bg-muted-foreground` for private meetings.
-**Fix:** Replace all orange/red styling with neutral colors matching the non-private styling.
-**Files:**
-
-- [ ] `src/components/MeetingComponents.tsx:122-126` — Replace orange toggle with neutral colors
-- [ ] `src/components/MeetingDetailModal.tsx` — Check for any orange border/ring/glow and remove
-
-## 3. Make Meeting Profile Pictures Colorless (Neutral Gray)
-
-**Problem:** Three color arrays across files define colored gradients for avatars:
-
-- `MeetingComponents.tsx:22-31` — `PERSON_COLORS`
-- `MeetingDetailModal.tsx:19-28` — `PERSON_COLORS`
-- `App.tsx:2646-2655` — `MEETING_PERSON_COLORS`
-  **Fix:** Replace all colored gradient arrays with a single neutral gray. Remove the hash-based color functions.
-  **Files:**
-- [ ] `src/components/MeetingComponents.tsx:22-38` — Replace `PERSON_COLORS` and `getPersonColor` with neutral
-- [ ] `src/components/MeetingDetailModal.tsx:19-42` — Same
-- [ ] `src/App.tsx:2646-2662` — Replace `MEETING_PERSON_COLORS` and `getMeetingPersonColor`
-
-## 4. CRM-Style Popup for Meeting Person Clicks
-
-**Problem:** Clicking a person in meetings opens `PersonDetailPanel` (a different, simpler panel) instead of the CRM `ContactDrawer` (which has relationship status, talking points, tags, notes, etc.).
-**Fix:** Replace `PersonDetailPanel` in meetings with the CRM `ContactDrawer`. Generate a mock `Contact` object from the person name.
-**Approach:**
-
-1. Create a `generateMockContact(name: string): Contact` utility that produces realistic Contact data
-2. In `MeetingsScreen`, import `ContactDrawer` from CRM and replace `PersonDetailPanel`
-3. When a person is clicked, generate the mock Contact and open the CRM drawer
-   **Files:**
-
-- [ ] `src/App.tsx:2774-2775, 3237-3240` — Replace `PersonDetailPanel` with `ContactDrawer` + mock Contact generation
-- [ ] Create utility or inline function for mock Contact generation
-
-## 5. Bigger CRM Cards (2-3x) with Size Toggle
-
-**Problem:** Cards have `min-h-[160px]`, `w-32` photo, grid constrained by `max-w-5xl`. Cards are too small.
-**Fix:** Make cards 2-3x larger, rectangular (wider than tall), 3 per row edge-to-edge. Add size toggle.
-**Approach:**
-
-1. Remove `max-w-5xl` constraint from grid
-2. Add card size state to CRM store: `cardSize: 'sm' | 'md' | 'lg'` (default 'lg')
-3. Scale card dimensions based on size:
-   - **sm** (current): `w-32` photo, `min-h-[160px]`
-   - **md** (2x): `w-48` photo, `min-h-[280px]`, `p-7`
-   - **lg** (3x): `w-64` photo, `min-h-[380px]`, `p-8`
-4. Grid always `grid-cols-3` with wider gap
-5. Profile pictures must be prominently visible
-6. Keep description uncondensed — wider cards = more space, NOT narrower text
-   **Files:**
-
-- [ ] `src/components/crm/layouts/card-grid/card-grid-layout.tsx` — Remove max-w, dynamic gap
-- [ ] `src/components/crm/layouts/card-grid/contact-card.tsx` — Size-responsive dimensions
-- [ ] `src/stores/crm-store.ts` — Add `cardSize` state + setter
-- [ ] `src/components/crm/crm-header.tsx` — Add size toggle control
-
-## 6. Fix Ask Sentra Bar Click Behavior
-
-**Problem:** Clicking the pill calls `expand()` changing state from `collapsed` to `expanded`, which swaps the arrow button for Auto/Attach/Voice buttons. This causes a visual jump.
-**Fix:** Remove the expand-on-click behavior. The bar should stay visually identical whether focused or not. Only transition to chat mode when a message is sent.
-**Approach:**
-
-1. Remove `handleInputClick` that triggers `expand()`
-2. Always show the collapsed-style arrow button (never show Auto/Attach/Voice in pill)
-3. Allow typing directly in collapsed state — just focus the input
-4. Only enter `chat` state via `sendMessage()`
-5. Keep click-outside and Escape to collapse from chat mode
-   **Files:**
-
-- [ ] `src/components/chat/ask-sentra-chatbox.tsx` — Remove expand on click, keep visual stable
+Rebuild the Meetings page to match the reference image (Granola-style meeting list), replacing the current card-based layout with a clean, minimal list view. Maintain the existing white/blue (`--accent: #00a6f5`) design system. When clicking a meeting row, open a detail modal matching the second reference image.
 
 ---
 
-## Execution Order
+## Current State
 
-```
-1. Briefs background     (quick, isolated)
-2. Meeting orange effects (quick, isolated)
-3. Meeting avatar colors  (quick, isolated)       } All parallel
-4. Sentra bar behavior    (quick, isolated)
+- **MeetingsScreen** lives inline in `App.tsx` (lines ~2907–3397) — a 490-line component
+- Uses `MeetingBrief` type from `src/types.ts` with `MeetingDetailCard`, `PreMeetingBriefOverlay`, `MeetingDetailModal` components
+- Current layout: scrollable page with "Scroll for History" → past meetings → "UP NEXT" divider → hero card → "Later" cards
+- Meeting data comes from `meetingBriefs` in `src/data.ts`
+- Design system: Figtree font, accent `#00a6f5`, warm neutrals, `rounded-[7px]` radius
 
-5. CRM card sizing + toggle (medium complexity)
-6. Meeting person → CRM drawer (medium complexity)
-```
+## Target State (from reference images)
+
+### Image 1 — Meeting List View
+
+- **"Coming up" header** (large, left-aligned) with "Show more" link on the right
+- **Meeting rows** displayed as clean list items:
+  - **Left badge**: Icon showing meeting type (Video icon for Zoom/virtual, MapPin icon for in-person) — replaces the date badge from the reference
+  - **Center**: Meeting title (bold), date & time below (muted text)
+  - **Right side**: Public/Private toggle badge + chevron arrow (`>`)
+- **Past meetings section**: Grouped by date headers ("Tue, Dec 9, 2025", "Mon, Dec 8, 2025")
+  - Same row layout: icon badge, title + subtitle, time on right
+- Clean, minimal, no cards — just rows with subtle hover states
+
+### Image 2 — Meeting Detail Modal (on click)
+
+- **Header**: Status badge ("COMPLETED") + "PUBLIC" badge, close button + Public toggle (top right)
+- **Title**: Large, bold
+- **Metadata row**: Calendar date, clock time, location (In Person/Zoom)
+- **Action buttons**: "Transcript" (blue/accent), "Share" (neutral)
+- **Divider line**
+- **Sections**: PURPOSE, ATTENDEES (count), KEY DECISIONS (bullet list), COMMITMENTS (checklist with assignee + due date + completion state)
+- Clean white card with rounded corners, light shadow
+
+---
+
+## Implementation Steps
+
+### Phase 1: Extract MeetingsScreen to its own file
+
+- [ ] Create `src/components/MeetingsPage.tsx`
+- [ ] Move `MeetingsScreen` component from `App.tsx` into new file
+- [ ] Move helper functions (`getMeetingTypeIcon`, `AttendeeAvatarStack`, `getMeetingPersonColor`, `getMeetingInitials`, `formatMeetingTime`, `getDateLabel`) into the new file
+- [ ] Update `App.tsx` imports to reference new file
+- [ ] Verify app still renders correctly
+
+### Phase 2: Build the new Meeting List UI
+
+- [ ] **Remove** all existing MeetingsScreen JSX (hero cards, "UP NEXT" divider, history section, later section)
+- [ ] **Create "Coming up" section**:
+  - Large heading "Coming up" with "Show more" link
+  - Filter upcoming meetings (`status === "scheduled"`)
+  - Render each as a clean row:
+    - Left: 40×40 rounded-lg icon badge (Video for zoom/meet/teams, MapPin for in-person, MessageSquare for phone)
+    - Center: Title (font-semibold), Date + Time below (text-muted-foreground, text-sm)
+    - Right: Public/Private toggle badge (clickable, styled with accent colors) + ChevronRight arrow
+  - Subtle hover state (bg-muted/50)
+  - Click anywhere on row → open detail modal
+
+- [ ] **Create "Past meetings" section**:
+  - Group completed meetings by date
+  - Date header labels (e.g., "Tue, Dec 9, 2025")
+  - Same row layout as "Coming up"
+  - Past meetings show document/note icon instead of meeting type icon (matching reference)
+  - Time displayed on right side
+
+### Phase 3: Rebuild the Meeting Detail Modal
+
+- [ ] **Rewrite `MeetingDetailModal.tsx`** to match the second reference image:
+  - **Header area**:
+    - Status dot + "COMPLETED"/"SCHEDULED" label + "PUBLIC"/"PRIVATE" pill badge
+    - Top right: Public/Private toggle button + X close button
+    - Title (text-2xl, font-semibold)
+    - Metadata row: Calendar icon + date, Clock icon + time, MapPin/Video icon + location
+    - Action buttons: "Transcript" (accent styled), "Share" (neutral)
+  - **Divider**: Simple horizontal line
+  - **Content sections** (scrollable):
+    - **PURPOSE**: Bold uppercase label, purpose text, italic human recognition line
+    - **ATTENDEES (count)**: Horizontal row of attendee pills (avatar circle with initials + name)
+    - **KEY DECISIONS**: Bullet list of decision text
+    - **COMMITMENTS**: Checklist items with:
+      - Checkbox (empty or filled circle for completed)
+      - Task text (strikethrough if completed)
+      - Assignee name + "Due [date]" below
+      - Comment icon on far right
+  - Spring animation on open/close (scale + fade)
+  - Backdrop blur
+
+### Phase 4: Wire everything together
+
+- [ ] Connect the new list rows to open the detail modal on click
+- [ ] Ensure privacy toggle works on both list badges and modal toggle
+- [ ] Keep existing person click → ContactDrawer flow
+- [ ] Keep existing transcript modal flow
+- [ ] Keep email compose flow
+- [ ] Remove unused imports and dead code from App.tsx
+
+### Phase 5: Polish & Verify
+
+- [ ] Ensure animations are smooth (motion/framer-motion)
+- [ ] Verify light mode styling matches white/blue theme
+- [ ] Verify dark mode still works
+- [ ] Test all interactive elements (toggle privacy, open modal, close modal, view transcript)
+- [ ] Clean up any console.log statements
+- [ ] Verify no TypeScript errors
+
+---
+
+## Files to Create/Modify
+
+| File                                    | Action                                                               |
+| --------------------------------------- | -------------------------------------------------------------------- |
+| `src/components/MeetingsPage.tsx`       | **CREATE** — New meetings list page component                        |
+| `src/components/MeetingDetailModal.tsx` | **REWRITE** — Rebuild to match reference image 2                     |
+| `src/App.tsx`                           | **MODIFY** — Replace inline MeetingsScreen with import from new file |
+
+## Files to Keep (no changes)
+
+- `src/types.ts` — MeetingBrief interface is sufficient
+- `src/data.ts` — Meeting data stays the same
+- `src/components/MeetingComponents.tsx` — May keep PreMeetingBriefOverlay or remove if superseded
+- `src/components/TranscriptModal.tsx` — Keep as-is
+- `src/styles/globals.css` — Design tokens stay the same
+
+## Design Decisions
+
+- **Font**: Figtree (existing) — matches the clean sans-serif in the reference
+- **Colors**: Keep `--accent: #00a6f5` for blue accents, warm neutrals for text
+- **Radius**: `rounded-lg` for icon badges, `rounded-[2rem]` for modal, `rounded-[7px]` for buttons
+- **Spacing**: Clean, generous whitespace matching reference
+- **Icons**: Lucide React (already in use) — Video, MapPin, MessageSquare, Lock, UsersRound, ChevronRight

@@ -81,34 +81,30 @@ export function ReportsSidebar({
     <div className="flex flex-col h-full p-3">
       {/* Header */}
       <header className="mb-3 pb-3 border-b border-border-subtle">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="font-medium text-xs uppercase tracking-wider text-muted-foreground">
-            Reports
-          </span>
+        {/* Section Navigation + Settings */}
+        <div className="flex items-start justify-between mb-2.5">
+          <div className="flex flex-col gap-0.5 flex-1">
+            <SectionNavItem
+              icon={File02Icon}
+              label="Reports"
+              isActive={viewMode === "reports"}
+              onClick={() => onViewModeChange("reports")}
+            />
+            <SectionNavItem
+              icon={AlertDiamondIcon}
+              label="Radar"
+              isActive={viewMode === "radar"}
+              onClick={() => onViewModeChange("radar")}
+            />
+          </div>
           <Button
             variant="ghost"
             size="icon"
-            className="size-7"
+            className="size-7 shrink-0 mt-1"
             onClick={openSettings}
           >
             <HugeiconsIcon icon={Setting07Icon} size={14} strokeWidth={1.5} />
           </Button>
-        </div>
-
-        {/* Section Navigation */}
-        <div className="flex flex-col gap-0.5 mb-2.5">
-          <SectionNavItem
-            icon={File02Icon}
-            label="Reports"
-            isActive={viewMode === "reports"}
-            onClick={() => onViewModeChange("reports")}
-          />
-          <SectionNavItem
-            icon={AlertDiamondIcon}
-            label="Radar"
-            isActive={viewMode === "radar"}
-            onClick={() => onViewModeChange("radar")}
-          />
         </div>
 
         {/* Search input */}

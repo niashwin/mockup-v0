@@ -19,7 +19,6 @@ import {
   DrawerLastInteraction,
   DrawerPersonalNotes,
   DrawerInterestingFacts,
-  DrawerTalkingPoints,
 } from "./drawer";
 
 /**
@@ -36,9 +35,7 @@ import {
  * 5. Last Interaction (branded icons: Gmail, Calendar, Zoom, Phone, In-Person)
  * 6. Personal Notes (inline editable, pencil inside box)
  * 7. Interesting Facts
- * 8. Recent Activity (accordion)
- * 9. Recent Company News (accordion)
- * 10. Contact Info (bottom)
+ * 8. Contact Info (bottom)
  */
 
 interface DrawerContentProps {
@@ -79,7 +76,6 @@ function DrawerContent({ contact, onViewAllMeetings }: DrawerContentProps) {
         />
         <DrawerPersonalNotes contact={contact} />
         <DrawerInterestingFacts contact={contact} />
-        <DrawerTalkingPoints contact={contact} />
       </div>
 
       {/* Contact info — bottom of drawer */}

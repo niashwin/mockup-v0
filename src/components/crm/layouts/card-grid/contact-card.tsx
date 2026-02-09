@@ -24,8 +24,7 @@ const SIZE_CONFIG = {
     tagText: "text-caption",
     maxTags: 3,
     initialsText: "text-heading",
-    summaryText: "text-caption",
-    summaryClamp: "line-clamp-2",
+    dateText: "text-caption",
   },
   md: {
     photoWidth: "w-48",
@@ -37,8 +36,7 @@ const SIZE_CONFIG = {
     tagText: "text-caption",
     maxTags: 4,
     initialsText: "text-display",
-    summaryText: "text-ui",
-    summaryClamp: "line-clamp-3",
+    dateText: "text-ui",
   },
   lg: {
     photoWidth: "w-64",
@@ -50,8 +48,7 @@ const SIZE_CONFIG = {
     tagText: "text-ui",
     maxTags: 5,
     initialsText: "text-2xl",
-    summaryText: "text-body",
-    summaryClamp: "line-clamp-4",
+    dateText: "text-body",
   },
 } as const;
 
@@ -169,47 +166,39 @@ export function ContactCard({
               {contact.company}
             </p>
 
-            {/* AI Summary - shown at md and lg sizes */}
-            {cardSize !== "sm" && contact.insights?.aiSummary && (
-              <p
-                className={cn(
-                  "text-muted-foreground mt-3",
-                  config.summaryText,
-                  config.summaryClamp,
+            {/* Tags - right below company */}
+            {displayTags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {displayTags.slice(0, config.maxTags).map((tag) => (
+                  <span
+                    key={tag}
+                    className={cn(
+                      "px-2 py-0.5 rounded bg-muted/50 text-muted-foreground truncate max-w-[120px] capitalize",
+                      config.tagText,
+                    )}
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {displayTags.length > config.maxTags && (
+                  <span
+                    className={cn("text-muted-foreground/50", config.tagText)}
+                  >
+                    +{displayTags.length - config.maxTags}
+                  </span>
                 )}
-              >
-                {contact.insights.aiSummary}
-              </p>
+              </div>
             )}
           </div>
 
-          {/* Tags */}
-          {displayTags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-3">
-              {displayTags.slice(0, config.maxTags).map((tag) => (
-                <span
-                  key={tag}
-                  className={cn(
-                    "px-2 py-0.5 rounded bg-muted/50 text-muted-foreground truncate max-w-[120px] capitalize",
-                    config.tagText,
-                  )}
-                >
-                  {tag}
-                </span>
-              ))}
-              {displayTags.length > config.maxTags && (
-                <span
-                  className={cn("text-muted-foreground/50", config.tagText)}
-                >
-                  +{displayTags.length - config.maxTags}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Bottom: Time in corner */}
+          {/* Bottom-right: Date, scaled by card size */}
           <div className="flex items-center justify-end mt-3 pt-2 border-t border-border/30">
-            <span className="text-caption text-muted-foreground/60 tabular-nums">
+            <span
+              className={cn(
+                "text-muted-foreground/60 tabular-nums",
+                config.dateText,
+              )}
+            >
               {formatRelativeTime(contact.lastContacted)}
             </span>
           </div>

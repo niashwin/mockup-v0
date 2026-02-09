@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowUp, X, Sparkles, Loader2 } from "lucide-react";
+import { useSettingsStore } from "@stores/settings-store";
 
 /**
  * Persistent Chat Bar
@@ -27,6 +28,7 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
   const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isSettingsOpen = useSettingsStore((state) => state.isOpen);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -39,6 +41,11 @@ export function PersistentChatBar({ onOpenChat }: PersistentChatBarProps) {
       inputRef.current?.focus();
     }
   }, [isExpanded]);
+
+  // Hide chat bar when report settings pane is open
+  if (isSettingsOpen) {
+    return null;
+  }
 
   const handleSubmit = async () => {
     if (!inputValue.trim()) return;

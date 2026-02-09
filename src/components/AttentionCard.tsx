@@ -427,7 +427,7 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           onClick={() => onExpand(item)}
-          className="p-3 bg-card/80 dark:bg-neutral-900/80 border border-border/60 rounded-[7px] cursor-pointer hover:bg-card dark:hover:bg-neutral-900 hover:border-border hover:shadow-lg transition-all group"
+          className="p-3 bg-card/80 dark:bg-neutral-900/80 border border-border/60 rounded-[7px] cursor-pointer hover:bg-card dark:hover:bg-neutral-900 hover:border-border transition-all group"
         >
           <div className="flex items-center gap-3">
             <div className={`w-1 h-8 rounded-full ${config.accentColor}`} />
@@ -462,7 +462,7 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(
         exit={{ opacity: 0, y: -20 }}
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
-        className="bg-card dark:bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 group"
+        className="bg-card dark:bg-card border border-border rounded-lg overflow-hidden transition-all duration-200 group"
       >
         {/* Accent bar */}
         <div className={`h-1 ${config.accentColor}`} />
@@ -504,8 +504,8 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(
           )}
 
           {/* Item 4: Title as system state (decision/dependency/risk/opportunity) */}
-          <div onClick={() => onExpand(item)} className="mb-3 cursor-pointer">
-            <h3 className="text-base font-semibold text-foreground leading-snug hover:text-accent transition-colors duration-200">
+          <div className="mb-3">
+            <h3 className="text-base font-semibold text-foreground leading-snug">
               {getTitle()}
             </h3>
           </div>
@@ -535,9 +535,8 @@ export const AttentionCard = forwardRef<HTMLDivElement, AttentionCardProps>(
           <div className="flex items-center gap-2">
             <button
               onClick={() => onExpand(item)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-[7px] text-sm font-medium transition-all ${config.bgColor} ${config.textColor} border ${config.borderColor} hover:shadow-md`}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-[7px] text-sm font-medium transition-all ${config.bgColor} text-black dark:text-black border ${config.borderColor} cursor-pointer`}
             >
-              <Eye size={14} />
               See details
             </button>
 

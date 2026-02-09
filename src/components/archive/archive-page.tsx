@@ -123,6 +123,8 @@ export function ArchivePage() {
     selectMeeting,
     searchQuery,
     setSearchQuery,
+    contactFilter,
+    setContactFilter,
   } = useArchiveStore();
 
   // Get archived reports (without radar items)
@@ -139,6 +141,14 @@ export function ArchivePage() {
     if (!selectedRadarId) return null;
     return mockRadarItems.find((r) => r.id === selectedRadarId) ?? null;
   }, [selectedRadarId]);
+
+  // Filter meetings by contact when navigating from CRM
+  const displayedMeetings = useMemo(() => {
+    if (!contactFilter) return allContactMeetings;
+    return allContactMeetings.filter((m) =>
+      m.linkedContactIds?.includes(contactFilter.contactId),
+    );
+  }, [contactFilter]);
 
   // Find selected meeting
   const selectedMeeting = useMemo(() => {
@@ -179,8 +189,35 @@ export function ArchivePage() {
     if (activeTab === "meetings") {
       return (
         <div className="flex-1 overflow-hidden flex flex-col">
+          {contactFilter && (
+            <div className="px-6 py-2.5 border-b border-border-subtle flex items-center gap-2">
+              <span className="text-caption text-muted-foreground">
+                Meetings with
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/10 text-accent text-caption font-medium">
+                {contactFilter.contactName}
+                <button
+                  type="button"
+                  onClick={() => setContactFilter(null)}
+                  className="ml-0.5 hover:text-accent/70 transition-colors"
+                  aria-label="Clear contact filter"
+                >
+                  <svg
+                    className="size-3"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <path d="M3 3l6 6M9 3l-6 6" />
+                  </svg>
+                </button>
+              </span>
+            </div>
+          )}
           <MeetingsList
-            meetings={allContactMeetings}
+            meetings={displayedMeetings}
             selectedMeetingId={selectedMeetingId}
             onSelectMeeting={handleSelectMeeting}
             searchQuery={searchQuery}
@@ -250,7 +287,7 @@ export function ArchivePage() {
         onTabChange={setActiveTab}
         radarsCount={mockRadarItems.length}
         reportsCount={archivedReports.length}
-        meetingsCount={allContactMeetings.length}
+        meetingsCount={displayedMeetings.length}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
